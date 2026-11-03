@@ -1,15 +1,17 @@
 #![cfg_attr(windows, windows_subsystem = "windows")]
 
+use flate2::read::GzDecoder;
 use sha2::{Digest, Sha256};
 use std::{
     env,
     fs::{self, File, OpenOptions},
-    io::{self, Read, Write},
+    io::{self, Read},
     path::{Path, PathBuf},
     process::{Command, Stdio},
 };
 
 const PAYLOAD: &[u8] = include_bytes!(env!("PATCH_PAYLOAD"));
+const PAYLOAD_SHA: &str = env!("PATCH_PAYLOAD_SHA256");
 const ORIGINAL_SHA: &str = env!("OFFICIAL_SHA256");
 const BUILD_TAG: &str = env!("PATCHER_BUILD_TAG");
 const API: &str = "https://api.github.com/repos/NikitaRTN/Horizon-Patcher/releases/latest";
@@ -217,7 +219,7 @@ fn apply(target: &Path) -> Result<(), String> {
     let _lock = ApplyLock(lock_path);
     let prior = state(&target);
     let old = hash_file(&target)?;
-    let new = hash_bytes(PAYLOAD);
+    let new = PAYLOAD_SHA.to_lowercase();
     if old == new {
         let mut record = prior.ok_or("This file already matches the payload, but has no patch state; refusing to register auto-update")?;
         if record["installed_sha256"].as_str() != Some(new.as_str()) {
@@ -261,11 +263,24 @@ fn apply(target: &Path) -> Result<(), String> {
         .create_new(true)
         .open(&temporary)
         .map_err(|e| e.to_string())?;
-    if let Err(e) = f.write_all(PAYLOAD).and_then(|_| f.sync_all()) {
-        let _ = fs::remove_file(&temporary);
-        return Err(e.to_string());
-    }
+    // Decompress into a sibling temporary file, then verify before replacing anything.
+    // The bound prevents corrupt payloads from expanding indefinitely.
+    let written = io::copy(
+        &mut GzDecoder::new(PAYLOAD).take(150 * 1024 * 1024 + 1),
+        &mut f,
+    )
+    .and_then(|n| f.sync_all().map(|_| n));
     drop(f);
+    if let Err(e) = &written {
+        let _ = fs::remove_file(&temporary);
+        return Err(format!("Could not decompress payload: {e}"));
+    }
+    if written.unwrap() > 150 * 1024 * 1024
+        || hash_file(&temporary).ok().as_deref() != Some(new.as_str())
+    {
+        let _ = fs::remove_file(&temporary);
+        return Err("Payload verification failed; launcher was not modified".into());
+    }
     if hash_file(&target)? != old {
         let _ = fs::remove_file(&temporary);
         return Err("Launcher changed during patching; no replacement made".into());

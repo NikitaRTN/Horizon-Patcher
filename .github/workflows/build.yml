@@ -111,7 +111,16 @@ jobs:
         shell: pwsh
         run: |
           $payload = (Resolve-Path cached-launcher/horizon-launcher.exe).Path
-          "PATCH_PAYLOAD=$payload" >> $env:GITHUB_ENV
+          $sha = (Get-FileHash $payload -Algorithm SHA256).Hash.ToLowerInvariant()
+          $compressed = Join-Path $env:RUNNER_TEMP 'horizon-payload.gz'
+          $inputStream = [IO.File]::OpenRead($payload)
+          $outputStream = [IO.File]::Create($compressed)
+          $gzip = [IO.Compression.GZipStream]::new($outputStream, [IO.Compression.CompressionLevel]::Optimal)
+          try { $inputStream.CopyTo($gzip) } finally { $gzip.Dispose(); $outputStream.Dispose(); $inputStream.Dispose() }
+          "PATCH_PAYLOAD=$compressed" >> $env:GITHUB_ENV
+          "PATCH_PAYLOAD_SHA256=$sha" >> $env:GITHUB_ENV
+          "UNCOMPRESSED_PAYLOAD=$payload" >> $env:GITHUB_ENV
+          Write-Host "Compressed launcher: $((Get-Item $payload).Length) -> $((Get-Item $compressed).Length) bytes"
       - name: Test and build the portable patcher
         if: steps.prepare.outputs.publish == 'true'
         shell: pwsh
@@ -138,7 +147,7 @@ jobs:
           $p = Start-Process -FilePath $exe -ArgumentList @('--apply', ('"' + $launcher + '"')) -Wait -PassThru
           if ($p.ExitCode -ne 0) { throw 'Patch failed on official fixture' }
           $applied = (Get-FileHash test-install/horizon-launcher.exe -Algorithm SHA256).Hash
-          $expected = (Get-FileHash $env:PATCH_PAYLOAD -Algorithm SHA256).Hash
+          $expected = (Get-FileHash $env:UNCOMPRESSED_PAYLOAD -Algorithm SHA256).Hash
           if ($applied -ne $expected) { throw 'Installed file differs from built payload' }
           $unexpected = @(Get-ChildItem test-install -File | Where-Object { $_.Name -ne 'horizon-launcher.exe' -and $_.Name -ne 'unknown.exe' })
           if ($unexpected.Count -ne 0) { throw 'Patching left unexpected files alongside the launcher' }
