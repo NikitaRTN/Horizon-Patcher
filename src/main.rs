@@ -377,6 +377,15 @@ fn run() -> Result<(), String> {
     match args.get(1).and_then(|s| s.to_str()) {
         Some("--watch") => watch(Path::new(args.get(2).ok_or("Missing target")?)),
         Some("--apply") => apply(Path::new(args.get(2).ok_or("Missing target")?)),
+        Some("--install") => {
+            let target = Path::new(args.get(2).ok_or("Missing target")?);
+            apply(target)?;
+            install_task(target).map_err(|e| {
+                format!("Launcher patched, but automatic updates were not installed: {e}")
+            })?;
+            println!("Hourly update check installed.");
+            Ok(())
+        }
         None => {
             println!("Horizon Privacy Patcher {BUILD_TAG}\nOnly supported official or previously patched files are modified.");
             let target = choose()?;
