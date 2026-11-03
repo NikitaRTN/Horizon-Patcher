@@ -27,11 +27,126 @@ index 3ff56b7..19f932e 100644
          Some(who) => account::session_for_game_as(&game_home(), who),
      }
      .map_err(|refused| format!("{refused} Sign in with `horizon-launcher account sign-in`."))?;
+diff --git a/launcher/src/collection.rs b/launcher/src/collection.rs
+index a9bfbed..e79a127 100644
+--- a/launcher/src/collection.rs
++++ b/launcher/src/collection.rs
+@@ -45,41 +45,6 @@ fn kind_id(prefix: &str, kind: DataKind) -> &'static str {
+     }
+ }
+ 
+-/// Where a switch would be: the ping has none.
+-fn always_on(t: &Theme) -> Div {
+-    caps(tr("Always on")).flex_none().text_color(t.muted)
+-}
+-
+-/// The "I'm playing" ping on the first-run question, laid out as the switches' rows.
+-fn ping_row(t: &Theme) -> Div {
+-    div()
+-        .flex()
+-        .items_start()
+-        .gap(px(16.))
+-        .py(px(10.))
+-        .border_b_1()
+-        .border_color(t.rule)
+-        .child(
+-            div()
+-                .flex()
+-                .flex_col()
+-                .flex_1()
+-                .min_w_0()
+-                .gap(px(2.))
+-                .child(
+-                    text(theme::UI)
+-                        .text_color(t.ink)
+-                        .child(tr(telemetry::PING_NAME)),
+-                )
+-                .child(
+-                    text(theme::CAPTION)
+-                        .text_color(t.muted)
+-                        .child(tr(telemetry::PING)),
+-                ),
+-        )
+-        .child(always_on(t))
+-}
+-
+ /// The exact JSON, in mono, scrolling inside a plate.
+ fn json_view(view: &(String, String), t: &Theme, scroll: &Scrollbar) -> Div {
+     div()
+@@ -199,8 +164,7 @@ impl Launcher {
+                     .flex_col()
+                     .border_t_1()
+                     .border_color(t.rule)
+-                    .children(rows)
+-                    .child(ping_row(&t)),
++                    .children(rows),
+             )
+             .child(text(theme::CAPTION).text_color(t.muted).child(tr(telemetry::NEVER)))
+             .child(
+@@ -295,13 +259,6 @@ impl Launcher {
+                 &t,
+             ));
+         }
+-        list = list.child(index_row(
+-            telemetry::SWITCHES.len() + 1,
+-            tr(telemetry::PING_NAME),
+-            Some(div().child(tr(telemetry::PING)).into_any_element()),
+-            Some(always_on(&t).into_any_element()),
+-            &t,
+-        ));
+         let waiting = horizon_telemetry::outbox::pending(&telemetry::home()).len();
+         let id = match consent.install_id.as_str() {
+             "" => tr("No install ID: nothing has been collected").to_string(),
 diff --git a/launcher/src/home.rs b/launcher/src/home.rs
-index f104276..a51c9ea 100644
+index f104276..4a5e02a 100644
 --- a/launcher/src/home.rs
 +++ b/launcher/src/home.rs
-@@ -237,7 +237,13 @@ impl Launcher {
+@@ -151,44 +151,6 @@ impl Launcher {
+                 ),
+             });
+         }
+-        // Players who answered the first-run question before the ping existed read about it
+-        // once here.
+-        if !self.settings.ping_notice_seen && !self.collection.consent.needs_asking() {
+-            hero = hero.child(
+-                crate::plate::plate(&n)
+-                    .flex()
+-                    .flex_none()
+-                    .flex_col()
+-                    .gap(px(6.))
+-                    .p(px(16.))
+-                    .w_full()
+-                    .max_w(px(560.))
+-                    .child(
+-                        shell::text(night::UI, c(n.ink))
+-                            .relative()
+-                            .child(tr(telemetry::PING_NAME)),
+-                    )
+-                    .child(
+-                        shell::text(night::CAPTION, c(n.muted))
+-                            .relative()
+-                            .child(tr(telemetry::PING)),
+-                    )
+-                    .child(
+-                        shell::text(night::UI, c(n.accent_hi))
+-                            .relative()
+-                            .id("ping-notice-ok")
+-                            .font_weight(FontWeight::SEMIBOLD)
+-                            .cursor_pointer()
+-                            .hover(|s| s.opacity(0.8))
+-                            .child(tr("Got it"))
+-                            .on_click(cx.listener(|this, _: &ClickEvent, _, cx| {
+-                                this.settings.ping_notice_seen = true;
+-                                this.settings.save();
+-                                cx.notify();
+-                            })),
+-                    ),
+-            );
+-        }
+         hero
+     }
+ 
+@@ -237,7 +199,13 @@ impl Launcher {
              .child(label(
                  tr(if running { "Running" } else { "Play" }).to_string(),
              ));
@@ -47,7 +162,7 @@ index f104276..a51c9ea 100644
              PlayPress::Play => {
                  play = play.on_click(cx.listener(|this, _: &ClickEvent, _, cx| {
 diff --git a/launcher/src/main.rs b/launcher/src/main.rs
-index 44b41b7..bbf7a2f 100644
+index 44b41b7..0e07470 100644
 --- a/launcher/src/main.rs
 +++ b/launcher/src/main.rs
 @@ -419,6 +419,8 @@ impl Launcher {
@@ -59,7 +174,59 @@ index 44b41b7..bbf7a2f 100644
          i18n::set(settings.language());
          if settings.minecraft_dir.is_none() {
              settings.minecraft_dir = backend::default_minecraft_dir();
-@@ -4897,6 +4899,19 @@ fn menus() -> Vec<Menu> {
+@@ -2435,7 +2437,6 @@ impl Launcher {
+             },
+         ));
+         let items = self.instance_items(heading, cx);
+-        let mut rows = items.len();
+         let list = div()
+             .flex()
+             .flex_col()
+@@ -2451,8 +2452,6 @@ impl Launcher {
+         if !servers.is_empty() {
+             list = list.child(heading(tr("SERVERS").into()));
+         }
+-        rows += servers.len();
+-        let headings = 1 + usize::from(!servers.is_empty());
+         for e in servers {
+             let up = self.servers.is_up(&e.dir);
+             let open = self.page == Page::Servers && self.servers.open.as_ref() == Some(&e.dir);
+@@ -2560,34 +2559,6 @@ impl Launcher {
+             }
+             _ => {}
+         }
+-        // Sculk's card above the links: seen without scrolling, on every page but Servers, which shows
+-        // its wide banner. Tall where the sidebar has the height for it besides the wordmark, its rows
+-        // (52 high each, under headings of 40) and the links, compact otherwise. After a while on
+-        // screen a "Hide" beside its label puts it away for good.
+-        if self.page != Page::Servers && !self.settings.partner_hidden {
+-            let free = f32::from(window.viewport_size().height)
+-                - theme::TOPBAR
+-                - 40. * headings as f32
+-                - 52. * rows as f32
+-                - 110.;
+-            let mut side = div().relative().mb(px(8.)).child(partner::card(
+-                "partner-side",
+-                theme::SIDEBAR - 20.,
+-                free < partner::TALL_HEIGHT,
+-                &t,
+-            ));
+-            if self.settings.partner_seen_secs >= partner::SEEN_BEFORE_HIDE {
+-                let hide = partner::hide_button("partner-hide", &t).on_click(cx.listener(
+-                    |this, _: &ClickEvent, _, cx| {
+-                        this.settings.partner_hidden = true;
+-                        this.settings.save();
+-                        cx.notify();
+-                    },
+-                ));
+-                side = side.child(hide);
+-            }
+-            foot = foot.child(side);
+-        }
+         if !self.links.sponsor.is_empty() {
+             foot = foot.child(link(
+                 "sponsor",
+@@ -4897,6 +4868,19 @@ fn menus() -> Vec<Menu> {
  }
  
  fn main() {

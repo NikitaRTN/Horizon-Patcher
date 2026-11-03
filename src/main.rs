@@ -81,6 +81,49 @@ fn plain_windows_path(path: &Path) -> String {
         s.into_owned()
     }
 }
+// Replace the target atomically without retaining an on-disk backup.
+#[cfg(windows)]
+fn replace_without_backup(target: &Path, replacement: &Path) -> Result<(), String> {
+    use std::os::windows::ffi::OsStrExt;
+    #[link(name = "Kernel32")]
+    extern "system" {
+        fn ReplaceFileW(
+            replaced: *const u16,
+            replacement: *const u16,
+            backup: *const u16,
+            flags: u32,
+            exclude: *mut std::ffi::c_void,
+            reserved: *mut std::ffi::c_void,
+        ) -> i32;
+    }
+    let target: Vec<u16> = target.as_os_str().encode_wide().chain(Some(0)).collect();
+    let replacement: Vec<u16> = replacement
+        .as_os_str()
+        .encode_wide()
+        .chain(Some(0))
+        .collect();
+    let result = unsafe {
+        ReplaceFileW(
+            target.as_ptr(),
+            replacement.as_ptr(),
+            std::ptr::null(),
+            0,
+            std::ptr::null_mut(),
+            std::ptr::null_mut(),
+        )
+    };
+    if result == 0 {
+        return Err(format!(
+            "Windows could not replace the launcher: {}",
+            io::Error::last_os_error()
+        ));
+    }
+    Ok(())
+}
+#[cfg(not(windows))]
+fn replace_without_backup(target: &Path, replacement: &Path) -> Result<(), String> {
+    fs::rename(replacement, target).map_err(|e| e.to_string())
+}
 fn is_not_running(target: &Path) -> Result<(), String> {
     let t = plain_windows_path(target);
     let script = r#"$ErrorActionPreference='Stop'; $target=$env:PATCH_TARGET; $name=[IO.Path]::GetFileNameWithoutExtension($target); foreach($p in @(Get-Process -Name $name -ErrorAction SilentlyContinue)){try {$path=$p.Path; if (-not $path -or [string]::Equals([IO.Path]::GetFullPath($path),[IO.Path]::GetFullPath($target),[StringComparison]::OrdinalIgnoreCase)){exit 2}} catch {exit 3}}; exit 0"#;
@@ -127,7 +170,7 @@ fn apply(target: &Path) -> Result<(), String> {
         let saved = lock_dir.join("state.json");
         fs::remove_file(&saved).map_err(|e| e.to_string())?;
         fs::rename(&tmp, &saved).map_err(|e| e.to_string())?;
-        println!("Already patched: {}", target.display());
+        println!("Already patched: {}", plain_windows_path(&target));
         return Ok(());
     }
     let prior_sha = prior
@@ -150,7 +193,6 @@ fn apply(target: &Path) -> Result<(), String> {
             .as_nanos()
     );
     let temporary = parent.join(format!(".horizon-patcher-{unique}.tmp"));
-    let backup = parent.join(format!("horizon-launcher-{unique}.backup"));
     let mut f = OpenOptions::new()
         .write(true)
         .create_new(true)
@@ -165,21 +207,13 @@ fn apply(target: &Path) -> Result<(), String> {
         let _ = fs::remove_file(&temporary);
         return Err("Launcher changed during patching; no replacement made".into());
     }
-    if let Err(e) = fs::rename(&target, &backup) {
+    if let Err(e) = replace_without_backup(&target, &temporary) {
         let _ = fs::remove_file(&temporary);
-        return Err(format!("Cannot make backup: {e}"));
-    }
-    if let Err(e) = fs::rename(&temporary, &target) {
-        let restore = fs::rename(&backup, &target);
-        let _ = fs::remove_file(&temporary);
-        return Err(format!(
-            "Could not install: {e}; restore: {restore:?}. Backup: {}",
-            backup.display()
-        ));
+        return Err(e);
     }
     let d = state_dir(&target)?;
     fs::create_dir_all(&d).map_err(|e| e.to_string())?;
-    let record = serde_json::json!({"target":target.to_string_lossy(),"installed_sha256":new,"build_tag":BUILD_TAG,"backup":backup.to_string_lossy()});
+    let record = serde_json::json!({"target":target.to_string_lossy(),"installed_sha256":new,"build_tag":BUILD_TAG});
     let temp_state = d.join(format!("state-{unique}.new"));
     fs::write(
         &temp_state,
@@ -191,7 +225,7 @@ fn apply(target: &Path) -> Result<(), String> {
         fs::remove_file(&state).map_err(|e| e.to_string())?
     }
     fs::rename(temp_state, state).map_err(|e| e.to_string())?;
-    println!("Patched {}\nBackup: {}", target.display(), backup.display());
+    println!("Patched {}", plain_windows_path(&target));
     Ok(())
 }
 fn scan_dir(
@@ -266,7 +300,7 @@ fn choose() -> Result<PathBuf, String> {
     let list = candidates();
     println!("Detected Horizon launchers:");
     for (i, p) in list.iter().enumerate() {
-        println!("  {}. {}", i + 1, p.display())
+        println!("  {}. {}", i + 1, plain_windows_path(p))
     }
     println!("Enter a number, or M to choose a file manually:");
     let mut s = String::new();

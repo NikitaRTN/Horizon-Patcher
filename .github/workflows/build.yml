@@ -52,6 +52,7 @@ jobs:
         run: |
           git -c core.autocrlf=false clone --depth 1 --branch $env:UPSTREAM_TAG https://github.com/horizon-rust/horizon.git upstream
           if ($LASTEXITCODE -ne 0) { throw 'Official source download failed' }
+          "UPSTREAM_COMMIT=$(git -C upstream rev-parse HEAD)" >> $env:GITHUB_ENV
           New-Item -ItemType Directory release-assets | Out-Null
           gh release download $env:UPSTREAM_TAG --repo horizon-rust/horizon --dir release-assets
           if ($LASTEXITCODE -ne 0) { throw 'Official release asset download failed' }
@@ -74,20 +75,42 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Upstream changed: patch requires review' }
           git -C upstream apply $patch
           if ($LASTEXITCODE -ne 0) { throw 'Patch application failed' }
-      - name: Test and build launcher
+      - name: Compute launcher cache key
         if: steps.prepare.outputs.publish == 'true'
+        id: launcher-key
+        shell: pwsh
+        run: |
+          $bytes = [Text.Encoding]::UTF8.GetBytes("$(rustc -Vv)`n$env:HORIZON_MSA_CLIENT_ID`n$env:RUSTFLAGS")
+          $sha = [Security.Cryptography.SHA256]::Create()
+          $key = [BitConverter]::ToString($sha.ComputeHash($bytes)).Replace('-', '').ToLowerInvariant()
+          "hash=$key" >> $env:GITHUB_OUTPUT
+      - name: Restore tested launcher cache
+        if: steps.prepare.outputs.publish == 'true'
+        id: launcher-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: cached-launcher/horizon-launcher.exe
+          key: launcher-v1-${{ env.UPSTREAM_COMMIT }}-${{ env.OFFICIAL_SHA256 }}-${{ hashFiles('patches/privacy.patch') }}-${{ steps.launcher-key.outputs.hash }}
+      - name: Test and build launcher
+        if: steps.prepare.outputs.publish == 'true' && steps.launcher-cache.outputs.cache-hit != 'true'
         working-directory: upstream/launcher
         shell: pwsh
         run: |
-          cargo test --locked --lib elyprism_windows_instances_are_discovered
+          cargo test --release --locked --lib elyprism_windows_instances_are_discovered
           if ($LASTEXITCODE -ne 0) { throw 'ElyPrism discovery test failed' }
-          cargo test --locked --lib the_developer_option_plays_offline_names_without_an_owner
+          cargo test --release --locked --lib the_developer_option_plays_offline_names_without_an_owner
           if ($LASTEXITCODE -ne 0) { throw 'Offline account test failed' }
-          cargo test --locked --lib mojang_downloads_only_for_an_owner
+          cargo test --release --locked --lib mojang_downloads_only_for_an_owner
           if ($LASTEXITCODE -ne 0) { throw 'Owner download gate test failed' }
           cargo build --release --locked --bin horizon-launcher
           if ($LASTEXITCODE -ne 0) { throw 'Launcher build failed' }
-          $payload = (Resolve-Path target/release/horizon-launcher.exe).Path
+          New-Item -ItemType Directory -Force ../../cached-launcher | Out-Null
+          Copy-Item target/release/horizon-launcher.exe ../../cached-launcher/horizon-launcher.exe
+      - name: Select verified launcher payload
+        if: steps.prepare.outputs.publish == 'true'
+        shell: pwsh
+        run: |
+          $payload = (Resolve-Path cached-launcher/horizon-launcher.exe).Path
           "PATCH_PAYLOAD=$payload" >> $env:GITHUB_ENV
       - name: Test and build the portable patcher
         if: steps.prepare.outputs.publish == 'true'
@@ -114,8 +137,14 @@ jobs:
           $applied = (Get-FileHash test-install/horizon-launcher.exe -Algorithm SHA256).Hash
           $expected = (Get-FileHash $env:PATCH_PAYLOAD -Algorithm SHA256).Hash
           if ($applied -ne $expected) { throw 'Installed file differs from built payload' }
-          $backup = @(Get-ChildItem test-install/*.backup)
-          if ($backup.Count -ne 1 -or (Get-FileHash $backup[0].FullName -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:OFFICIAL_SHA256) { throw 'Original backup is missing or changed' }
+          $unexpected = @(Get-ChildItem test-install -File | Where-Object { $_.Name -ne 'horizon-launcher.exe' -and $_.Name -ne 'unknown.exe' })
+          if ($unexpected.Count -ne 0) { throw 'Patching left unexpected files alongside the launcher' }
+      - name: Save tested launcher cache
+        if: steps.prepare.outputs.publish == 'true' && steps.launcher-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: cached-launcher/horizon-launcher.exe
+          key: ${{ steps.launcher-cache.outputs.cache-primary-key }}
       - uses: actions/upload-artifact@v4
         if: steps.prepare.outputs.publish == 'true'
         with:
