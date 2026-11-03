@@ -130,10 +130,13 @@ jobs:
           $env:LOCALAPPDATA = (Resolve-Path test-home).Path
           Copy-Item official/horizon-launcher.exe test-install/horizon-launcher.exe
           [IO.File]::WriteAllText((Join-Path (Resolve-Path test-install) 'unknown.exe'), 'not a launcher')
-          & dist/HorizonPatcher.exe --apply test-install/unknown.exe
-          if ($LASTEXITCODE -eq 0) { throw 'Unknown file must be refused' }
-          & dist/HorizonPatcher.exe --apply test-install/horizon-launcher.exe
-          if ($LASTEXITCODE -ne 0) { throw 'Patch failed on official fixture' }
+          $exe = (Resolve-Path dist/HorizonPatcher.exe).Path
+          $unknown = (Resolve-Path test-install/unknown.exe).Path
+          $launcher = (Resolve-Path test-install/horizon-launcher.exe).Path
+          $p = Start-Process -FilePath $exe -ArgumentList @('--apply', ('"' + $unknown + '"')) -Wait -PassThru
+          if ($p.ExitCode -eq 0) { throw 'Unknown file must be refused' }
+          $p = Start-Process -FilePath $exe -ArgumentList @('--apply', ('"' + $launcher + '"')) -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw 'Patch failed on official fixture' }
           $applied = (Get-FileHash test-install/horizon-launcher.exe -Algorithm SHA256).Hash
           $expected = (Get-FileHash $env:PATCH_PAYLOAD -Algorithm SHA256).Hash
           if ($applied -ne $expected) { throw 'Installed file differs from built payload' }

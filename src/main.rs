@@ -1,3 +1,5 @@
+#![cfg_attr(windows, windows_subsystem = "windows")]
+
 use sha2::{Digest, Sha256};
 use std::{
     env,
@@ -56,8 +58,69 @@ fn state(target: &Path) -> Option<serde_json::Value> {
     }
     Some(v)
 }
+fn hidden_command(program: impl AsRef<std::ffi::OsStr>) -> Command {
+    let mut command = Command::new(program);
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        command.creation_flags(0x08000000); // CREATE_NO_WINDOW for console children
+    }
+    command
+}
+fn run_gui() -> Result<(), String> {
+    let script = include_str!("gui.ps1");
+    if script.encode_utf16().count() > 30000 {
+        return Err("GUI script exceeds Windows environment limit".into());
+    }
+    let status = hidden_command("powershell.exe")
+        .args([
+            "-NoLogo",
+            "-NoProfile",
+            "-NonInteractive",
+            "-STA",
+            "-WindowStyle",
+            "Hidden",
+            "-Command",
+            "& ([ScriptBlock]::Create($env:HORIZON_GUI_SCRIPT))",
+        ])
+        .env("HORIZON_GUI_SCRIPT", script)
+        .env(
+            "HORIZON_PATCHER_EXE",
+            env::current_exe().map_err(|e| e.to_string())?,
+        )
+        .env("HORIZON_PATCHER_TAG", BUILD_TAG)
+        .status()
+        .map_err(|e| e.to_string())?;
+    if status.success() {
+        Ok(())
+    } else {
+        Err(format!("GUI could not start (exit {status})"))
+    }
+}
+#[cfg(windows)]
+fn show_startup_error(message: &str) {
+    #[link(name = "user32")]
+    extern "system" {
+        fn MessageBoxW(
+            hwnd: *mut std::ffi::c_void,
+            text: *const u16,
+            caption: *const u16,
+            kind: u32,
+        ) -> i32;
+    }
+    let text: Vec<u16> = message.encode_utf16().chain(Some(0)).collect();
+    let title: Vec<u16> = "Horizon Privacy Patcher"
+        .encode_utf16()
+        .chain(Some(0))
+        .collect();
+    unsafe {
+        MessageBoxW(std::ptr::null_mut(), text.as_ptr(), title.as_ptr(), 0x10);
+    }
+}
+#[cfg(not(windows))]
+fn show_startup_error(_message: &str) {}
 fn ps(script: &str, vars: &[(&str, &str)]) -> Result<std::process::Output, String> {
-    let mut c = Command::new("powershell.exe");
+    let mut c = hidden_command("powershell.exe");
     c.args([
         "-NoLogo",
         "-NoProfile",
@@ -287,32 +350,6 @@ fn candidates() -> Vec<PathBuf> {
     }
     out
 }
-fn manual() -> Result<PathBuf, String> {
-    let script = r#"Add-Type -AssemblyName System.Windows.Forms; $d=New-Object System.Windows.Forms.OpenFileDialog; $d.Title='Select Horizon launcher'; $d.Filter='Executable (*.exe)|*.exe|All files (*.*)|*.*'; [Console]::OutputEncoding=New-Object System.Text.UTF8Encoding; if($d.ShowDialog() -eq 'OK'){[Console]::Write($d.FileName)} else {exit 1}"#;
-    let out = ps(script, &[])?;
-    if !out.status.success() {
-        return Err("No file selected".into());
-    }
-    let s = String::from_utf8(out.stdout).map_err(|e| e.to_string())?;
-    Ok(PathBuf::from(s.trim()))
-}
-fn choose() -> Result<PathBuf, String> {
-    let list = candidates();
-    println!("Detected Horizon launchers:");
-    for (i, p) in list.iter().enumerate() {
-        println!("  {}. {}", i + 1, plain_windows_path(p))
-    }
-    println!("Enter a number, or M to choose a file manually:");
-    let mut s = String::new();
-    io::stdin().read_line(&mut s).map_err(|e| e.to_string())?;
-    if s.trim().eq_ignore_ascii_case("m") {
-        return manual();
-    };
-    let n: usize = s.trim().parse().map_err(|_| "Invalid choice")?;
-    list.get(n.wrapping_sub(1))
-        .cloned()
-        .ok_or("Invalid choice".into())
-}
 fn install_task(target: &Path) -> Result<(), String> {
     let target = canonical(target)?;
     let dir = state_dir(&target)?;
@@ -332,7 +369,7 @@ fn install_task(target: &Path) -> Result<(), String> {
         plain_windows_path(&exe),
         plain_windows_path(&target)
     );
-    let query = Command::new("schtasks.exe")
+    let query = hidden_command("schtasks.exe")
         .args(["/Query", "/TN", &name])
         .stdout(Stdio::null())
         .stderr(Stdio::null())
@@ -341,7 +378,7 @@ fn install_task(target: &Path) -> Result<(), String> {
     if query.success() {
         return Ok(());
     }
-    let r = Command::new("schtasks.exe")
+    let r = hidden_command("schtasks.exe")
         .args([
             "/Create", "/SC", "HOURLY", "/MO", "1", "/TN", &name, "/TR", &action,
         ])
@@ -395,7 +432,7 @@ fn watch(target: &Path) -> Result<(), String> {
         let _ = fs::remove_file(&tmp);
         return Err("Update checksum mismatch".into());
     }
-    let status = Command::new(&tmp)
+    let status = hidden_command(&tmp)
         .arg("--apply")
         .arg(&target)
         .status()
@@ -420,18 +457,19 @@ fn run() -> Result<(), String> {
             println!("Hourly update check installed.");
             Ok(())
         }
-        None => {
-            println!("Horizon Privacy Patcher {BUILD_TAG}\nOnly supported official or previously patched files are modified.");
-            let target = choose()?;
-            apply(&target)?;
-            match install_task(&target) {
-                Ok(()) => println!("Hourly update check installed."),
-                Err(e) => println!("Patched, but automatic updates were not installed: {e}"),
-            };
-            println!("Press Enter to exit.");
-            let _ = io::stdin().read_line(&mut String::new());
+        Some("--scan") => {
+            let paths: Vec<String> = candidates()
+                .iter()
+                .take(100)
+                .map(|p| plain_windows_path(p))
+                .collect();
+            println!(
+                "{}",
+                serde_json::to_string(&paths).map_err(|e| e.to_string())?
+            );
             Ok(())
         }
+        None => run_gui(),
         _ => Err("Unknown option".into()),
     }
 }
@@ -449,8 +487,7 @@ fn main() {
         }
         eprintln!("Error: {e}");
         if env::args_os().len() == 1 {
-            println!("Press Enter to exit.");
-            let _ = io::stdin().read_line(&mut String::new());
+            show_startup_error(&e);
         }
         std::process::exit(1)
     }
@@ -497,6 +534,10 @@ mod tests {
         let _ = child.wait();
         let _ = fs::remove_dir_all(dir);
         assert!(result.is_err(), "a running launcher must not be replaced");
+    }
+    #[test]
+    fn gui_script_fits_windows_environment() {
+        assert!(include_str!("gui.ps1").encode_utf16().count() <= 30000);
     }
     #[test]
     fn computes_sha256() {
