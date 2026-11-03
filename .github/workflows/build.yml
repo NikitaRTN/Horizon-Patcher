@@ -45,6 +45,7 @@ jobs:
           "release_tag=$buildTag" >> $env:GITHUB_OUTPUT
           gh release view $buildTag --repo $env:GITHUB_REPOSITORY 2>$null | Out-Null
           if ($LASTEXITCODE -eq 0) { 'publish=false' >> $env:GITHUB_OUTPUT } else { 'publish=true' >> $env:GITHUB_OUTPUT }
+          $global:LASTEXITCODE = 0
       - name: Fetch source and official assets
         if: steps.prepare.outputs.publish == 'true'
         shell: pwsh
