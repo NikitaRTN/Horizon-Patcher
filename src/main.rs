@@ -71,8 +71,18 @@ fn ps(script: &str, vars: &[(&str, &str)]) -> Result<std::process::Output, Strin
     }
     c.output().map_err(|e| e.to_string())
 }
+fn plain_windows_path(path: &Path) -> String {
+    let s = path.to_string_lossy();
+    if let Some(rest) = s.strip_prefix(r"\\?\UNC\") {
+        format!(r"\\{rest}")
+    } else if let Some(rest) = s.strip_prefix(r"\\?\") {
+        rest.to_owned()
+    } else {
+        s.into_owned()
+    }
+}
 fn is_not_running(target: &Path) -> Result<(), String> {
-    let t = target.to_string_lossy();
+    let t = plain_windows_path(target);
     let script = r#"$ErrorActionPreference='Stop'; $target=$env:PATCH_TARGET; $name=[IO.Path]::GetFileNameWithoutExtension($target); foreach($p in @(Get-Process -Name $name -ErrorAction SilentlyContinue)){try {$path=$p.Path; if (-not $path -or [string]::Equals([IO.Path]::GetFullPath($path),[IO.Path]::GetFullPath($target),[StringComparison]::OrdinalIgnoreCase)){exit 2}} catch {exit 3}}; exit 0"#;
     let out = ps(script, &[("PATCH_TARGET", &t)])?;
     if !out.status.success() {
@@ -283,7 +293,11 @@ fn install_task(target: &Path) -> Result<(), String> {
         .ok_or("Invalid task path")?
         .to_string_lossy();
     let name = format!("HorizonPrivacyPatcher-{id}");
-    let action = format!("\"{}\" --watch \"{}\"", exe.display(), target.display());
+    let action = format!(
+        "\"{}\" --watch \"{}\"",
+        plain_windows_path(&exe),
+        plain_windows_path(&target)
+    );
     let query = Command::new("schtasks.exe")
         .args(["/Query", "/TN", &name])
         .stdout(Stdio::null())
@@ -406,6 +420,40 @@ mod tests {
         assert!(eligible("abc", "ABC", None));
         assert!(eligible("old", "other", Some("OLD")));
         assert!(!eligible("bad", "good", Some("old")));
+    }
+    #[test]
+    fn strips_windows_verbatim_prefixes() {
+        assert_eq!(
+            plain_windows_path(Path::new(r"\\?\C:\launcher.exe")),
+            r"C:\launcher.exe"
+        );
+        assert_eq!(
+            plain_windows_path(Path::new(r"\\?\UNC\server\share\launcher.exe")),
+            r"\\server\share\launcher.exe"
+        );
+    }
+    #[cfg(windows)]
+    #[test]
+    fn refuses_to_replace_a_running_target() {
+        let dir = env::temp_dir().join(format!(
+            "horizon-patcher-running-test-{}",
+            std::process::id()
+        ));
+        fs::create_dir_all(&dir).unwrap();
+        let target = dir.join("horizon-launcher.exe");
+        fs::copy(env::var_os("COMSPEC").expect("Windows COMSPEC"), &target).unwrap();
+        let mut child = Command::new(&target)
+            .args(["/c", "ping -n 30 127.0.0.1 >nul"])
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .spawn()
+            .unwrap();
+        std::thread::sleep(std::time::Duration::from_millis(800));
+        let result = is_not_running(&canonical(&target).unwrap());
+        let _ = child.kill();
+        let _ = child.wait();
+        let _ = fs::remove_dir_all(dir);
+        assert!(result.is_err(), "a running launcher must not be replaced");
     }
     #[test]
     fn computes_sha256() {

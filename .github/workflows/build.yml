@@ -138,4 +138,4 @@ jobs:
           path: dist
       - name: Publish tested Windows executable
         run: |
-          gh release create "$RELEASE_TAG" dist/HorizonPatcher.exe --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "$RELEASE_TAG" --notes "Automated build. See the repository README for compatibility and security limitations."
+          gh release create "$RELEASE_TAG" dist/HorizonPatcher.exe --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --latest --title "$RELEASE_TAG" --notes "Automated build. See the repository README for compatibility and security limitations."
