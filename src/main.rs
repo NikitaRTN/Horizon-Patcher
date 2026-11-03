@@ -387,175 +387,157 @@ fn ensure_gui_subsystem(exe: &Path) -> Result<(), String> {
     Ok(())
 }
 
-// Always install this build into a new content-addressed path. The old watcher
-// may still be running while --apply is executing, so it cannot be overwritten.
-fn install_task(target: &Path, create_if_missing: bool) -> Result<(), String> {
-    let target = canonical(target)?;
-    let dir = state_dir(&target)?;
+// Remove only the tasks installed by older versions, never custom actions.
+fn remove_legacy_task(target: &Path) -> Result<(), String> {
+    let dir = state_dir(target)?;
     let id = dir
         .file_name()
         .ok_or("Invalid task path")?
         .to_string_lossy();
     let name = format!("HorizonPrivacyPatcher-{id}");
-    let query = hidden_command("schtasks.exe")
-        .args(["/Query", "/TN", &name])
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .status()
-        .map_err(|e| e.to_string())?;
-    let exists = query.success();
-    if !exists && !create_if_missing {
+    let dir_s = plain_windows_path(&dir);
+    let target_s = plain_windows_path(target);
+    let out = ps(
+        include_str!("remove-task.ps1"),
+        &[
+            ("PATCH_TASK", &name),
+            ("PATCH_DIR", &dir_s),
+            ("PATCH_TARGET", &target_s),
+        ],
+    )?;
+    if !out.status.success() {
+        return Err(format!(
+            "Could not remove old update task {name}: {}",
+            String::from_utf8_lossy(&out.stderr).trim()
+        ));
+    }
+    Ok(())
+}
+
+fn remove_all_legacy_tasks() -> Result<(), String> {
+    let root = PathBuf::from(env::var_os("LOCALAPPDATA").ok_or("LOCALAPPDATA not set")?)
+        .join("HorizonPrivacyPatcher");
+    if !root.exists() {
         return Ok(());
     }
-
-    let current = env::current_exe().map_err(|e| e.to_string())?;
-    ensure_gui_subsystem(&current)?;
-    let digest = hash_file(&current)?;
-    fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
-    let exe = dir.join(format!("updater-{digest}.exe"));
-    if exe.exists() {
-        if hash_file(&exe)? != digest {
-            return Err("Existing updater checksum mismatch".into());
+    for entry in fs::read_dir(&root).map_err(|e| e.to_string())? {
+        let entry = entry.map_err(|e| e.to_string())?;
+        if !entry.file_type().map_err(|e| e.to_string())?.is_dir() {
+            continue;
         }
-    } else {
-        let temp = dir.join(format!(
-            "updater-{}-{}.tmp",
+        let Ok(bytes) = fs::read(entry.path().join("state.json")) else {
+            continue;
+        };
+        let Ok(v) = serde_json::from_slice::<serde_json::Value>(&bytes) else {
+            continue;
+        };
+        let Some(path) = v.get("target").and_then(|x| x.as_str()) else {
+            continue;
+        };
+        let target = Path::new(path);
+        if state_dir(target)? != entry.path() {
+            continue;
+        }
+        remove_legacy_task(target)?;
+    }
+    Ok(())
+}
+
+// Only the interactive launch checks for a newer patcher. Internal --apply and
+// --scan invocations do not make network requests or install scheduled tasks.
+fn startup_update() -> Result<bool, String> {
+    let check = ps(include_str!("check-update.ps1"), &[("PATCH_API", API)])?;
+    if !check.status.success() {
+        show_startup_error(
+            "Не удалось проверить обновление патчера. Будет открыта установленная версия.",
+        );
+        return Ok(false);
+    }
+    let release: serde_json::Value =
+        serde_json::from_slice(&check.stdout).map_err(|e| e.to_string())?;
+    let tag = release["tag"].as_str().ok_or("Missing release tag")?;
+    if tag == BUILD_TAG {
+        return Ok(false);
+    }
+    let url = release["url"].as_str().ok_or("Missing asset URL")?;
+    if !url.starts_with(ASSET_PREFIX) {
+        return Err("Unexpected update download origin".into());
+    }
+    let expected = release["digest"]
+        .as_str()
+        .and_then(|s| s.strip_prefix("sha256:"))
+        .ok_or("Missing update checksum")?;
+    if expected.len() != 64 || !expected.bytes().all(|b| b.is_ascii_hexdigit()) {
+        return Err("Invalid update checksum".into());
+    }
+    let original = canonical(&env::current_exe().map_err(|e| e.to_string())?)?;
+    let old_hash = hash_file(&original)?;
+    let temp = original
+        .parent()
+        .ok_or("Patcher has no parent directory")?
+        .join(format!(
+            ".horizon-patcher-update-{}-{}.exe",
             std::process::id(),
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map_err(|e| e.to_string())?
                 .as_nanos()
         ));
-        let result = (|| -> Result<(), String> {
-            fs::copy(&current, &temp).map_err(|e| e.to_string())?;
-            if hash_file(&temp)? != digest {
-                return Err("Updater copy checksum mismatch".into());
-            }
-            match fs::rename(&temp, &exe) {
-                Ok(()) => Ok(()),
-                Err(e)
-                    if exe.exists() && hash_file(&exe).ok().as_deref() == Some(digest.as_str()) =>
-                {
-                    let _ = e;
-                    Ok(())
-                }
-                Err(e) => Err(e.to_string()),
-            }
-        })();
+    OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(&temp)
+        .map_err(|e| format!("Cannot create update beside patcher: {e}"))?;
+    let result = (|| -> Result<(), String> {
+        let temp_s = plain_windows_path(&temp);
+        let download = r#"$ErrorActionPreference='Stop'; [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -UseBasicParsing -TimeoutSec 120 -Uri $env:PATCH_URL -OutFile $env:PATCH_FILE"#;
+        let out = ps(download, &[("PATCH_URL", url), ("PATCH_FILE", &temp_s)])?;
+        if !out.status.success() {
+            return Err("Update download failed".into());
+        }
+        if !hash_file(&temp)?.eq_ignore_ascii_case(expected) {
+            return Err("Update checksum mismatch".into());
+        }
+        ensure_gui_subsystem(&temp)?;
+        let dest = plain_windows_path(&original);
+        let pid = std::process::id().to_string();
+        hidden_command("powershell.exe")
+            .args([
+                "-NoLogo",
+                "-NoProfile",
+                "-NonInteractive",
+                "-STA",
+                "-Command",
+                "& ([ScriptBlock]::Create($env:HP_UPDATE_SCRIPT))",
+            ])
+            .env("HP_UPDATE_SCRIPT", include_str!("finish-update.ps1"))
+            .env("HP_PARENT", pid)
+            .env("HP_DEST", dest)
+            .env("HP_TEMP", &temp_s)
+            .env("HP_OLD_HASH", &old_hash)
+            .env("HP_NEW_HASH", expected)
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .spawn()
+            .map_err(|e| format!("Could not start update helper: {e}"))?;
+        Ok(())
+    })();
+    if result.is_err() {
         let _ = fs::remove_file(&temp);
-        result?;
     }
-    let exe_path = plain_windows_path(&exe);
-    let target_path = plain_windows_path(&target);
-    if exists {
-        // Preserve triggers/settings and refuse to overwrite a user-modified task.
-        let script = r#"$ErrorActionPreference='Stop'; $task=Get-ScheduledTask -TaskName $env:PATCH_TASK -TaskPath '\'; $a=@($task.Actions); if($a.Count -ne 1){throw 'Task action is not managed by Horizon Patcher'}; $p=[IO.Path]::GetFullPath(([string]$a[0].Execute).Trim('"')); $dir=[IO.Path]::GetFullPath($env:PATCH_DIR); $name=[IO.Path]::GetFileName($p); $expected='--watch "'+$env:PATCH_TARGET+'"'; if(-not [string]::Equals([IO.Path]::GetDirectoryName($p),$dir,[StringComparison]::OrdinalIgnoreCase) -or $name -notmatch '^updater(?:-[0-9a-f]{64})?\.exe$' -or $a[0].Arguments -ne $expected){throw 'Task action is not managed by Horizon Patcher'}; $new=New-ScheduledTaskAction -Execute $env:PATCH_EXE -Argument $expected; Set-ScheduledTask -TaskName $env:PATCH_TASK -TaskPath '\' -Action $new | Out-Null"#;
-        let out = ps(
-            script,
-            &[
-                ("PATCH_TASK", &name),
-                ("PATCH_DIR", &plain_windows_path(&dir)),
-                ("PATCH_TARGET", &target_path),
-                ("PATCH_EXE", &exe_path),
-            ],
-        )?;
-        if !out.status.success() {
-            return Err(format!(
-                "Could not update existing hourly task: {}",
-                String::from_utf8_lossy(&out.stderr)
-            ));
-        }
-    } else {
-        // Task Scheduler's schtasks /TR has a 261-character limit; use the
-        // native cmdlets so paths containing spaces and long names work.
-        let script = r#"$ErrorActionPreference='Stop'; $action=New-ScheduledTaskAction -Execute $env:PATCH_EXE -Argument ('--watch "'+$env:PATCH_TARGET+'"'); $trigger=New-ScheduledTaskTrigger -Once -At (Get-Date).AddHours(1) -RepetitionInterval (New-TimeSpan -Hours 1); Register-ScheduledTask -TaskName $env:PATCH_TASK -TaskPath '\' -Action $action -Trigger $trigger | Out-Null"#;
-        let out = ps(
-            script,
-            &[
-                ("PATCH_TASK", &name),
-                ("PATCH_TARGET", &target_path),
-                ("PATCH_EXE", &exe_path),
-            ],
-        )?;
-        if !out.status.success() {
-            return Err(format!(
-                "Could not configure hourly update task: {}",
-                String::from_utf8_lossy(&out.stderr)
-            ));
-        }
-    }
-    Ok(())
-}
-fn watch(target: &Path) -> Result<(), String> {
-    let target = canonical(target)?;
-    let saved = state(&target).ok_or("No patch state for this launcher")?;
-    let script = r#"$ErrorActionPreference='Stop'; [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; [Console]::OutputEncoding=New-Object System.Text.UTF8Encoding; $r=Invoke-RestMethod -Uri $env:PATCH_API -Headers @{'User-Agent'='Horizon-Patcher'}; $a=@($r.assets | Where-Object {$_.name -eq 'HorizonPatcher.exe'}); if($a.Count -ne 1 -or $a[0].digest -notmatch '^sha256:[0-9a-fA-F]{64}$' -or $a[0].size -gt 157286400){throw 'No verifiable update asset'}; @{tag=$r.tag_name; url=$a[0].browser_download_url; digest=$a[0].digest} | ConvertTo-Json -Compress"#;
-    let output = ps(script, &[("PATCH_API", API)])?;
-    if !output.status.success() {
-        return Err("Could not fetch a verifiable patcher release".into());
-    }
-    let release: serde_json::Value =
-        serde_json::from_slice(&output.stdout).map_err(|e| e.to_string())?;
-    let tag = release["tag"].as_str().ok_or("Missing tag")?;
-    if saved["build_tag"].as_str() == Some(tag)
-        && saved["installed_sha256"].as_str() == Some(hash_file(&target)?.as_str())
-    {
-        return Ok(());
-    }
-    let url = release["url"].as_str().ok_or("Missing asset URL")?;
-    if !url.starts_with(ASSET_PREFIX) {
-        return Err("Unexpected download origin".into());
-    }
-    let expected = release["digest"]
-        .as_str()
-        .and_then(|s| s.strip_prefix("sha256:"))
-        .ok_or("Missing digest")?;
-    let dir = state_dir(&target)?;
-    let tmp = dir.join(format!("download-{}.exe", std::process::id()));
-    if tmp.exists() {
-        return Err("Update temporary file already exists".into());
-    }
-    let download = r#"$ErrorActionPreference='Stop'; [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -UseBasicParsing -Uri $env:PATCH_URL -OutFile $env:PATCH_FILE"#;
-    let tmp_s = tmp.to_string_lossy();
-    let out = ps(download, &[("PATCH_URL", url), ("PATCH_FILE", &tmp_s)])?;
-    if !out.status.success() {
-        let _ = fs::remove_file(&tmp);
-        return Err("Update download failed".into());
-    }
-    if !hash_file(&tmp)?.eq_ignore_ascii_case(expected) {
-        let _ = fs::remove_file(&tmp);
-        return Err("Update checksum mismatch".into());
-    }
-    let status = hidden_command(&tmp)
-        .arg("--apply")
-        .arg(&target)
-        .status()
-        .map_err(|e| e.to_string())?;
-    let _ = fs::remove_file(&tmp);
-    if !status.success() {
-        return Err("Update was not applied; it will retry later".into());
-    }
-    Ok(())
+    result.map(|_| true)
 }
 fn run() -> Result<(), String> {
     let args: Vec<_> = env::args_os().collect();
     match args.get(1).and_then(|s| s.to_str()) {
-        Some("--watch") => watch(Path::new(args.get(2).ok_or("Missing target")?)),
-        Some("--apply") => {
-            let target = Path::new(args.get(2).ok_or("Missing target")?);
-            apply(target)?;
-            install_task(target, false).map_err(|e| {
-                format!("Launcher patched, but existing updater was not refreshed: {e}")
-            })
+        Some("--watch") => {
+            remove_legacy_task(&canonical(Path::new(args.get(2).ok_or("Missing target")?))?)
         }
-        Some("--install") => {
-            let target = Path::new(args.get(2).ok_or("Missing target")?);
-            apply(target)?;
-            install_task(target, true).map_err(|e| {
-                format!("Launcher patched, but automatic updates were not installed: {e}")
-            })?;
-            println!("Hourly update check installed.");
-            Ok(())
+        Some("--apply") | Some("--install") => {
+            let target = canonical(Path::new(args.get(2).ok_or("Missing target")?))?;
+            remove_legacy_task(&target)?;
+            apply(&target)
         }
         Some("--scan") => {
             let paths: Vec<String> = candidates()
@@ -569,7 +551,18 @@ fn run() -> Result<(), String> {
             );
             Ok(())
         }
-        None => run_gui(),
+        None => {
+            remove_all_legacy_tasks()?;
+            if startup_update()? {
+                Ok(())
+            } else {
+                run_gui()
+            }
+        }
+        Some("--updated") => {
+            remove_all_legacy_tasks()?;
+            run_gui()
+        }
         _ => Err("Unknown option".into()),
     }
 }
@@ -586,7 +579,9 @@ fn main() {
             }
         }
         eprintln!("Error: {e}");
-        if env::args_os().len() == 1 {
+        if env::args_os().len() == 1
+            || env::args_os().nth(1).as_deref() == Some(std::ffi::OsStr::new("--updated"))
+        {
             show_startup_error(&e);
         }
         std::process::exit(1)
@@ -596,7 +591,7 @@ fn main() {
 mod tests {
     use super::*;
     #[test]
-    fn scheduled_updater_requires_gui_executable() {
+    fn update_requires_gui_executable() {
         let path = env::temp_dir().join(format!("horizon-patcher-pe-test-{}", std::process::id()));
         let mut image = vec![0u8; 256];
         image[..2].copy_from_slice(b"MZ");

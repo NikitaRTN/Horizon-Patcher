@@ -92,7 +92,7 @@ $timer.Add_Tick({
         if ($exit -ne 0) { $statusTitle.Text='ОШИБКА ПОИСКА'; $statusTitle.ForeColor=Color '#ffb398'; $status.Text=$err }
         elseif ($list.Items.Count -gt 0) { $list.SelectedIndex=0; $statusTitle.Text='ГОТОВО'; $status.Text='Выберите лаунчер и закройте его перед применением патча.' }
         else { $statusTitle.Text='ЛАУНЧЕР НЕ НАЙДЕН'; $status.Text='Выберите файл horizon-launcher.exe вручную.' }
-    } elseif ($exit -eq 0) { $statusTitle.Text='ГОТОВО'; $status.Text='Патч применён. Проверка обновлений настроена каждый час.' }
+    } elseif ($exit -eq 0) { $statusTitle.Text='ГОТОВО'; $status.Text='Патч применён. Обновления проверяются при запуске патчера.' }
     else { $statusTitle.Text='НЕ УДАЛОСЬ ЗАВЕРШИТЬ'; $statusTitle.ForeColor=Color '#ffb398'; if ($err -match 'Unsupported or modified') { $status.Text='Неизвестная или изменённая версия лаунчера. Файл не изменён.' } elseif ($err -match 'Close the selected launcher') { $status.Text='Закройте лаунчер и попробуйте ещё раз.' } else { $status.Text=$err } }
     SetBusy $false
 })
