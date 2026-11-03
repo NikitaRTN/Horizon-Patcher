@@ -1,0 +1,140 @@
+name: Build portable Windows patcher
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    - cron: '17 */6 * * *'
+concurrency:
+  group: horizon-patcher-release
+  cancel-in-progress: false
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 90
+    outputs:
+      release_tag: ${{ steps.prepare.outputs.release_tag }}
+      publish: ${{ steps.prepare.outputs.publish }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RUSTFLAGS: '-C target-feature=+crt-static'
+      HORIZON_MSA_CLIENT_ID: ${{ vars.HORIZON_MSA_CLIENT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Find official release and skip existing build
+        id: prepare
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $releases = gh release list --repo horizon-rust/horizon --limit 100 --json tagName,isDraft,isPrerelease | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0) { throw 'Failed to list upstream releases' }
+          $selected = $releases | Where-Object { -not $_.isDraft -and -not $_.isPrerelease -and $_.tagName -match '^launcher@[0-9]+\.[0-9]+\.[0-9]+$' } | Select-Object -First 1
+          if (-not $selected) { throw 'No official launcher release found' }
+          $tag = $selected.tagName
+          $version = $tag.Substring('launcher@'.Length)
+          $buildTag = 'patcher-' + $version + '-' + $env:GITHUB_SHA.Substring(0,8)
+          "UPSTREAM_TAG=$tag" >> $env:GITHUB_ENV
+          "HORIZON_LAUNCHER_TAG=$tag" >> $env:GITHUB_ENV
+          "HORIZON_LAUNCHER_VERSION=$version" >> $env:GITHUB_ENV
+          "PATCHER_BUILD_TAG=$buildTag" >> $env:GITHUB_ENV
+          "release_tag=$buildTag" >> $env:GITHUB_OUTPUT
+          gh release view $buildTag --repo $env:GITHUB_REPOSITORY 2>$null | Out-Null
+          if ($LASTEXITCODE -eq 0) { 'publish=false' >> $env:GITHUB_OUTPUT } else { 'publish=true' >> $env:GITHUB_OUTPUT }
+      - name: Fetch source and official assets
+        if: steps.prepare.outputs.publish == 'true'
+        shell: pwsh
+        run: |
+          git -c core.autocrlf=false clone --depth 1 --branch $env:UPSTREAM_TAG https://github.com/horizon-rust/horizon.git upstream
+          if ($LASTEXITCODE -ne 0) { throw 'Official source download failed' }
+          New-Item -ItemType Directory release-assets | Out-Null
+          gh release download $env:UPSTREAM_TAG --repo horizon-rust/horizon --dir release-assets
+          if ($LASTEXITCODE -ne 0) { throw 'Official release asset download failed' }
+      - name: Verify upstream signature and archive hashes
+        if: steps.prepare.outputs.publish == 'true'
+        shell: pwsh
+        run: |
+          $dir = (Resolve-Path release-assets).Path
+          cargo run --release --locked --manifest-path upstream/Cargo.toml -p horizon-release-sign -- verify --tag $env:UPSTREAM_TAG $dir
+          if ($LASTEXITCODE -ne 0) { throw 'Upstream signature or checksum verification failed' }
+          Expand-Archive release-assets/horizon-launcher-windows-x64.zip -DestinationPath official
+          $sha = (Get-FileHash official/horizon-launcher.exe -Algorithm SHA256).Hash.ToLowerInvariant()
+          "OFFICIAL_SHA256=$sha" >> $env:GITHUB_ENV
+      - name: Apply source patch safely
+        if: steps.prepare.outputs.publish == 'true'
+        shell: pwsh
+        run: |
+          $patch = (Resolve-Path patches/privacy.patch).Path
+          git -C upstream apply --check $patch
+          if ($LASTEXITCODE -ne 0) { throw 'Upstream changed: patch requires review' }
+          git -C upstream apply $patch
+          if ($LASTEXITCODE -ne 0) { throw 'Patch application failed' }
+      - name: Test and build launcher
+        if: steps.prepare.outputs.publish == 'true'
+        working-directory: upstream/launcher
+        shell: pwsh
+        run: |
+          cargo test --locked --lib elyprism_windows_instances_are_discovered
+          if ($LASTEXITCODE -ne 0) { throw 'ElyPrism discovery test failed' }
+          cargo test --locked --lib the_developer_option_plays_offline_names_without_an_owner
+          if ($LASTEXITCODE -ne 0) { throw 'Offline account test failed' }
+          cargo test --locked --lib mojang_downloads_only_for_an_owner
+          if ($LASTEXITCODE -ne 0) { throw 'Owner download gate test failed' }
+          cargo build --release --locked --bin horizon-launcher
+          if ($LASTEXITCODE -ne 0) { throw 'Launcher build failed' }
+          $payload = (Resolve-Path target/release/horizon-launcher.exe).Path
+          "PATCH_PAYLOAD=$payload" >> $env:GITHUB_ENV
+      - name: Test and build the portable patcher
+        if: steps.prepare.outputs.publish == 'true'
+        shell: pwsh
+        run: |
+          cargo test --locked
+          if ($LASTEXITCODE -ne 0) { throw 'Patcher tests failed' }
+          cargo build --release --locked
+          if ($LASTEXITCODE -ne 0) { throw 'Patcher build failed' }
+          New-Item -ItemType Directory dist | Out-Null
+          Copy-Item target/release/horizon-patcher.exe dist/HorizonPatcher.exe
+      - name: Smoke test safe replacement with temporary fixtures
+        if: steps.prepare.outputs.publish == 'true'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory test-home, test-install | Out-Null
+          $env:LOCALAPPDATA = (Resolve-Path test-home).Path
+          Copy-Item official/horizon-launcher.exe test-install/horizon-launcher.exe
+          [IO.File]::WriteAllText((Join-Path (Resolve-Path test-install) 'unknown.exe'), 'not a launcher')
+          & dist/HorizonPatcher.exe --apply test-install/unknown.exe
+          if ($LASTEXITCODE -eq 0) { throw 'Unknown file must be refused' }
+          & dist/HorizonPatcher.exe --apply test-install/horizon-launcher.exe
+          if ($LASTEXITCODE -ne 0) { throw 'Patch failed on official fixture' }
+          $applied = (Get-FileHash test-install/horizon-launcher.exe -Algorithm SHA256).Hash
+          $expected = (Get-FileHash $env:PATCH_PAYLOAD -Algorithm SHA256).Hash
+          if ($applied -ne $expected) { throw 'Installed file differs from built payload' }
+          $backup = @(Get-ChildItem test-install/*.backup)
+          if ($backup.Count -ne 1 -or (Get-FileHash $backup[0].FullName -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:OFFICIAL_SHA256) { throw 'Original backup is missing or changed' }
+      - uses: actions/upload-artifact@v4
+        if: steps.prepare.outputs.publish == 'true'
+        with:
+          name: tested-patcher
+          path: dist/HorizonPatcher.exe
+          retention-days: 2
+  publish:
+    needs: build
+    if: needs.build.outputs.publish == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RELEASE_TAG: ${{ needs.build.outputs.release_tag }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: tested-patcher
+          path: dist
+      - name: Publish tested Windows executable
+        run: |
+          gh release create "$RELEASE_TAG" dist/HorizonPatcher.exe --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "$RELEASE_TAG" --notes "Automated build. See the repository README for compatibility and security limitations."

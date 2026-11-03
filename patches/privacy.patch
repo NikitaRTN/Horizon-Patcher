@@ -1,0 +1,180 @@
+diff --git a/launcher/src/account.rs b/launcher/src/account.rs
+index ac46ddc..75a5d2d 100644
+--- a/launcher/src/account.rs
++++ b/launcher/src/account.rs
+@@ -21,9 +21,9 @@ use std::sync::{Mutex, OnceLock};
+ use std::time::{Duration, SystemTime, UNIX_EPOCH};
+ 
+ /// The keychain service name every secret is stored under.
+-pub const SERVICE: &str = "dev.playhorizon.launcher";
++pub const SERVICE: &str = "dev.playhorizon.launcher.privacy-patcher";
+ const SCOPE: &str = "XboxLive.signin offline_access";
+-pub const NOT_CONFIGURED: &str = "This build of the launcher has no Microsoft sign-in (HORIZON_MSA_CLIENT_ID), so it can't start the game.";
++pub const NOT_CONFIGURED: &str = "Microsoft sign-in is not configured in this build (HORIZON_MSA_CLIENT_ID). Offline play can use your existing Minecraft files.";
+ /// What every Play says while no account in the launcher owns the game.
+ pub const NEEDS_OWNER: &str =
+     "Sign in with a Microsoft account that owns Minecraft: Java Edition to play";
+diff --git a/launcher/src/backend.rs b/launcher/src/backend.rs
+index 3ff56b7..19f932e 100644
+--- a/launcher/src/backend.rs
++++ b/launcher/src/backend.rs
+@@ -2429,7 +2429,7 @@ pub fn client(tag: &str) -> Result<Command, String> {
+ /// [`client`], playing as `who` for this launch only (`play --account`).
+ pub fn client_as(tag: &str, who: Option<&account::Player>) -> Result<Command, String> {
+     let (session, offline) = match who {
+-        None => account::session_for_game(&game_home(), false).map_err(|e| e.to_string()),
++        None => account::session_for_game(&game_home(), true).map_err(|e| e.to_string()),
+         Some(who) => account::session_for_game_as(&game_home(), who),
+     }
+     .map_err(|refused| format!("{refused} Sign in with `horizon-launcher account sign-in`."))?;
+diff --git a/launcher/src/home.rs b/launcher/src/home.rs
+index f104276..a51c9ea 100644
+--- a/launcher/src/home.rs
++++ b/launcher/src/home.rs
+@@ -237,7 +237,13 @@ impl Launcher {
+             .child(label(
+                 tr(if running { "Running" } else { "Play" }).to_string(),
+             ));
+-        match play_press(ready, self.owner, self.preparing || running) {
++        // Offline play can prepare from existing local files; the Mojang download gate remains strict.
++        let owner_for_play = if self.settings.dev_offline && !java {
++            Some(true)
++        } else {
++            self.owner
++        };
++        match play_press(ready, owner_for_play, self.preparing || running) {
+             PlayPress::Nothing => play = disabled(play),
+             PlayPress::Play => {
+                 play = play.on_click(cx.listener(|this, _: &ClickEvent, _, cx| {
+diff --git a/launcher/src/main.rs b/launcher/src/main.rs
+index 44b41b7..bbf7a2f 100644
+--- a/launcher/src/main.rs
++++ b/launcher/src/main.rs
+@@ -419,6 +419,8 @@ impl Launcher {
+         })
+         .detach();
+         let mut settings = Settings::load();
++        // This build permits offline play from the player's own local installation.
++        settings.dev_offline = true;
+         i18n::set(settings.language());
+         if settings.minecraft_dir.is_none() {
+             settings.minecraft_dir = backend::default_minecraft_dir();
+@@ -4897,6 +4899,19 @@ fn menus() -> Vec<Menu> {
+ }
+ 
+ fn main() {
++    // Keep account files separate from an ordinary Horizon install unless explicitly configured.
++    if std::env::var_os("HORIZON_LAUNCHER_HOME").is_none() {
++        if let Some(data) = dirs::data_dir() {
++            std::env::set_var(
++                "HORIZON_LAUNCHER_HOME",
++                data.join("horizon-launcher-privacy-patcher"),
++            );
++        }
++    }
++    // Set before starting worker threads. Child game processes inherit the opt-out.
++    std::env::set_var("HORIZON_TELEMETRY_URL", "off");
++    // The source-based updater must validate and rebuild before replacing this executable.
++    std::env::set_var("HORIZON_LAUNCHER_NO_SELF_UPDATE", "1");
+     if let Err(error) = console::attach_for_cli() {
+         eprintln!("Could not restore the launcher's terminal streams: {error}");
+         std::process::exit(1);
+diff --git a/launcher/src/other_launchers.rs b/launcher/src/other_launchers.rs
+index 96aa620..f77a70a 100644
+--- a/launcher/src/other_launchers.rs
++++ b/launcher/src/other_launchers.rs
+@@ -400,6 +400,8 @@ pub fn in_folder(dir: &Path, launcher: Option<&'static str>) -> Vec<Found> {
+     };
+     let launcher = launcher.unwrap_or(if named(&["multimc", "MultiMC"]) {
+         "MultiMC"
++    } else if named(&["ElyPrismLauncher"]) {
++        "ElyPrism"
+     } else if named(&["PrismLauncher"]) {
+         "Prism Launcher"
+     } else {
+@@ -422,7 +424,9 @@ pub fn scan(os: Os, folders: &Folders) -> Vec<Found> {
+         seen.push(dir.clone());
+         match launcher {
+             OFFICIAL => found.extend(official_profiles(&dir)),
+-            "Prism Launcher" | "MultiMC" => found.extend(prism_instances(&dir, launcher)),
++            "Prism Launcher" | "ElyPrism" | "MultiMC" => {
++                found.extend(prism_instances(&dir, launcher))
++            }
+             "Modrinth App" => found.extend(modrinth_app_profiles(&dir)),
+             ATLAUNCHER => found.extend(atlauncher_instances(&dir)),
+             _ => {}
+diff --git a/launcher/src/other_launchers/tests.rs b/launcher/src/other_launchers/tests.rs
+index e3d2e0b..6d6245f 100644
+--- a/launcher/src/other_launchers/tests.rs
++++ b/launcher/src/other_launchers/tests.rs
+@@ -312,3 +312,26 @@ fn atlauncher_loader_types_match_whatever_the_case() {
+     assert!(atlauncher_loader(&json!({"loaderVersion": {"type": "Forge"}})).is_none());
+     assert!(atlauncher_loader(&json!({})).is_none());
+ }
++
++#[test]
++fn elyprism_windows_instances_are_discovered() {
++    let root = scratch("elyprism-windows");
++    let instance = root.join("ElyPrismLauncher/instances/example");
++    write(&instance.join("instance.cfg"), "[General]\nname=Example\n");
++    write(
++        &instance.join("mmc-pack.json"),
++        &json!({"components": [{"uid": "net.minecraft", "version": "26.3"}]}).to_string(),
++    );
++    fs::create_dir_all(instance.join("minecraft")).unwrap();
++    let folders = Folders {
++        home: root.clone(),
++        data: root.clone(),
++        config: root.clone(),
++    };
++    let found = scan(Os::Windows, &folders);
++    assert!(found
++        .iter()
++        .any(|i| i.launcher == "ElyPrism" && i.name == "Example"));
++    assert_eq!(in_folder(&instance, None)[0].launcher, "ElyPrism");
++    let _ = fs::remove_dir_all(root);
++}
+diff --git a/launcher/src/sources.rs b/launcher/src/sources.rs
+index 5c2d31b..ab776ee 100644
+--- a/launcher/src/sources.rs
++++ b/launcher/src/sources.rs
+@@ -143,6 +143,7 @@ pub fn known_folders(os: Os, f: &Folders) -> Vec<(&'static str, PathBuf)> {
+         Os::Windows => vec![
+             (OFFICIAL, f.data.join(".minecraft")),
+             ("Prism Launcher", f.data.join("PrismLauncher")),
++            ("ElyPrism", f.data.join("ElyPrismLauncher")),
+             ("Modrinth App", f.data.join("ModrinthApp")),
+             ("ATLauncher", f.data.join("ATLauncher")),
+         ],
+@@ -254,6 +255,7 @@ fn launcher_of(path: &Path) -> Option<&'static str> {
+         .filter_map(|name| name.to_str())
+         .find_map(|name| match name {
+             "PrismLauncher" => Some("Prism Launcher"),
++            "ElyPrismLauncher" => Some("ElyPrism"),
+             "multimc" | "MultiMC" => Some("MultiMC"),
+             "ModrinthApp" | "com.modrinth.theseus" => Some("the Modrinth App"),
+             "atlauncher" | "ATLauncher" => Some("ATLauncher"),
+diff --git a/launcher/src/sources_tests.rs b/launcher/src/sources_tests.rs
+index 396f508..4835103 100644
+--- a/launcher/src/sources_tests.rs
++++ b/launcher/src/sources_tests.rs
+@@ -548,5 +548,6 @@ fn each_system_has_its_launcher_folders() {
+         got[0],
+         "the official launcher: C:/Users/r/AppData/Roaming/.minecraft"
+     );
++    assert!(got.contains(&"ElyPrism: C:/Users/r/AppData/Roaming/ElyPrismLauncher".into()));
+     assert!(got.contains(&"ATLauncher: C:/Users/r/AppData/Roaming/ATLauncher".into()));
+ }
+diff --git a/launcher/src/telemetry.rs b/launcher/src/telemetry.rs
+index 06f9fee..67dc71a 100644
+--- a/launcher/src/telemetry.rs
++++ b/launcher/src/telemetry.rs
+@@ -43,7 +43,7 @@ pub const NEVER: &str = "Never sent: your account name or UUID, world names, ser
+ /// decision, 2026-10-22: count everyone, and tell them). Shown on the first-run question, in
+ /// Settings, and once on the Play page to players who answered before it existed.
+ pub const PING_NAME: &str = "\"I'm playing\" ping";
+-pub const PING: &str = "While you play, the game sends an anonymous \"I'm playing\" ping once a minute, so the launcher can show how many people play Horizon right now. It holds: a random number made when the game starts and forgotten when it closes, the Horizon version, your OS (Linux, macOS or Windows), and whether you have a world open to LAN or friends. It doesn't hold: your account, your install ID, world or server names, or anything you do in the game, and the server doesn't keep your IP address. It is sent whatever the switches say.";
++pub const PING: &str = "This privacy build disables the Horizon telemetry endpoint and the playing ping for the launcher and game processes it starts.";
+ 
+ /// How many play Horizon now (exact), if the server says.
+ pub fn playing_now() -> Option<u64> {
