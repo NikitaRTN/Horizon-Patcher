@@ -1,3 +1,5 @@
+# PowerShell 7 can pass module paths incompatible with Windows PowerShell.
+Remove-Item Env:PSModulePath -ErrorAction SilentlyContinue
 $ErrorActionPreference='Stop'
 try {
     $parent=Get-Process -Id ([int]$env:HP_PARENT) -ErrorAction SilentlyContinue

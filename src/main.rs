@@ -75,6 +75,7 @@ fn run_gui() -> Result<(), String> {
         return Err("GUI script exceeds Windows environment limit".into());
     }
     let status = hidden_command("powershell.exe")
+        .env_remove("PSModulePath")
         .args([
             "-NoLogo",
             "-NoProfile",
@@ -123,6 +124,7 @@ fn show_startup_error(message: &str) {
 fn show_startup_error(_message: &str) {}
 fn ps(script: &str, vars: &[(&str, &str)]) -> Result<std::process::Output, String> {
     let mut c = hidden_command("powershell.exe");
+    c.env_remove("PSModulePath");
     c.args([
         "-NoLogo",
         "-NoProfile",
@@ -502,6 +504,7 @@ fn startup_update() -> Result<bool, String> {
         let dest = plain_windows_path(&original);
         let pid = std::process::id().to_string();
         hidden_command("powershell.exe")
+            .env_remove("PSModulePath")
             .args([
                 "-NoLogo",
                 "-NoProfile",
