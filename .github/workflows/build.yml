@@ -157,6 +157,15 @@ jobs:
           if ($applied -ne $expected) { throw 'Installed file differs from built payload' }
           $unexpected = @(Get-ChildItem test-install -File | Where-Object { $_.Name -ne 'horizon-launcher.exe' -and $_.Name -ne 'unknown.exe' })
           if ($unexpected.Count -ne 0) { throw 'Patching left unexpected files alongside the launcher' }
+      - name: Verify GUI subsystem and scheduled-task migration
+        if: steps.prepare.outputs.publish == 'true'
+        shell: pwsh
+        run: |
+          $exe = (Resolve-Path dist/HorizonPatcher.exe).Path
+          $b = [IO.File]::ReadAllBytes($exe)
+          $offset = [BitConverter]::ToInt32($b, 0x3c)
+          if ($b[0] -ne 0x4d -or $b[1] -ne 0x5a -or [BitConverter]::ToUInt32($b, $offset) -ne 0x4550 -or [BitConverter]::ToUInt16($b, $offset + 24 + 68) -ne 2) { throw 'Patcher is not a Windows GUI-subsystem executable' }
+          ./tests/scheduler-migration.ps1 -Patcher $exe -Official (Resolve-Path official/horizon-launcher.exe).Path
       - name: Save tested launcher cache
         if: steps.prepare.outputs.publish == 'true' && steps.launcher-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4

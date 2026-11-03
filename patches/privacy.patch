@@ -15,7 +15,7 @@ index ac46ddc..75a5d2d 100644
  pub const NEEDS_OWNER: &str =
      "Sign in with a Microsoft account that owns Minecraft: Java Edition to play";
 diff --git a/launcher/src/backend.rs b/launcher/src/backend.rs
-index 3ff56b7..383f729 100644
+index 3ff56b7..819a808 100644
 --- a/launcher/src/backend.rs
 +++ b/launcher/src/backend.rs
 @@ -1528,7 +1528,17 @@ pub fn java_game(
@@ -59,6 +59,55 @@ index 3ff56b7..383f729 100644
          Some(who) => account::session_for_game_as(&game_home(), who),
      }
      .map_err(|refused| format!("{refused} Sign in with `horizon-launcher account sign-in`."))?;
+@@ -3589,5 +3603,5 @@ mod tests {
+-        // In the sources: one call downloads the game, in `download_for`, and the only caller
+-        // of that asks the strict gate. Game-file hosts appear nowhere else.
++        // Network game downloads go through `download_for` and its owner gate.
++        // The offline importer also uses the downloader, with a local-only fetcher.
+         let src = Path::new(env!("CARGO_MANIFEST_DIR")).join("src");
+         let mut files = vec![src.clone()];
+         let mut sources = Vec::new();
+@@ -3604,7 +3618,7 @@ mod tests {
+                 sources.push((name, in_tests, text));
+             }
+         }
+-        let calls: Vec<_> = sources
++        let mut calls: Vec<_> = sources
+             .iter()
+             .filter(|(_, tests, _)| !tests)
+             .flat_map(|(name, _, text)| {
+@@ -3612,7 +3626,19 @@ mod tests {
+                     .map(move |_| name.as_str())
+             })
+             .collect();
+-        assert_eq!(calls, ["backend.rs"]);
++        calls.sort_unstable();
++        assert_eq!(calls, ["backend.rs", "offline_java.rs"]);
++        let offline = &sources.iter().find(|(n, ..)| n == "offline_java.rs").unwrap().2;
++        // The extra call must use the closure which reads and verifies local files,
++        // not the network-capable metadata fetcher.
++        assert!(offline.contains("mojang::download(&pins, dest, os, 8, &local, &mojang::CANCEL, log)"));
++        let local_start = offline.find("let local = |url: &str|").unwrap();
++        let local_end = local_start + offline[local_start..].find("\n    let os =").unwrap();
++        let local = &offline[local_start..local_end];
++        assert!(local.contains("fs::read("));
++        assert!(local.contains("sources::sha1_hex("));
++        assert!(!local.contains("fetch_metadata"));
++        assert!(!local.contains("reqwest"));
+         let backend = &sources.iter().find(|(n, ..)| n == "backend.rs").unwrap().2;
+         let body = |f: &str| {
+             let start = backend.find(&format!("\nfn {f}(")).unwrap();
+@@ -3654,7 +3680,9 @@ pub fn {f}("
+         ] {
+             for (name, tests, text) in &sources {
+                 assert!(
+-                    *tests || name == "mojang.rs" || !text.contains(host),
++                    *tests || name == "mojang.rs"
++                        || (name == "offline_java.rs" && host == "resources.download.minecraft.net")
++                        || !text.contains(host),
+                     "{name} names {host}"
+                 );
+             }
 diff --git a/launcher/src/collection.rs b/launcher/src/collection.rs
 index a9bfbed..e79a127 100644
 --- a/launcher/src/collection.rs

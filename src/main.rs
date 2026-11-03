@@ -5,7 +5,7 @@ use sha2::{Digest, Sha256};
 use std::{
     env,
     fs::{self, File, OpenOptions},
-    io::{self, Read},
+    io::{self, Read, Seek, SeekFrom},
     path::{Path, PathBuf},
     process::{Command, Stdio},
 };
@@ -365,45 +365,124 @@ fn candidates() -> Vec<PathBuf> {
     }
     out
 }
-fn install_task(target: &Path) -> Result<(), String> {
+// A scheduled updater must be a Windows GUI-subsystem executable; otherwise
+// Task Scheduler opens a console in interactive sessions every hour.
+fn ensure_gui_subsystem(exe: &Path) -> Result<(), String> {
+    let mut file = File::open(exe).map_err(|e| e.to_string())?;
+    let mut dos = [0u8; 64];
+    file.read_exact(&mut dos).map_err(|e| e.to_string())?;
+    if &dos[..2] != b"MZ" {
+        return Err("Updater is not a Windows executable".into());
+    }
+    let pe_offset = u32::from_le_bytes(dos[60..64].try_into().unwrap()) as u64;
+    file.seek(SeekFrom::Start(pe_offset))
+        .map_err(|e| e.to_string())?;
+    let mut pe = [0u8; 94];
+    file.read_exact(&mut pe).map_err(|e| e.to_string())?;
+    let magic = u16::from_le_bytes(pe[24..26].try_into().unwrap());
+    let subsystem = u16::from_le_bytes(pe[92..94].try_into().unwrap());
+    if &pe[..4] != b"PE\0\0" || ![0x10b, 0x20b].contains(&magic) || subsystem != 2 {
+        return Err("Updater must be a Windows GUI-subsystem executable".into());
+    }
+    Ok(())
+}
+
+// Always install this build into a new content-addressed path. The old watcher
+// may still be running while --apply is executing, so it cannot be overwritten.
+fn install_task(target: &Path, create_if_missing: bool) -> Result<(), String> {
     let target = canonical(target)?;
     let dir = state_dir(&target)?;
-    fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
-    let exe = dir.join("updater.exe");
-    if !exe.exists() {
-        fs::copy(env::current_exe().map_err(|e| e.to_string())?, &exe)
-            .map_err(|e| e.to_string())?;
-    }
     let id = dir
         .file_name()
         .ok_or("Invalid task path")?
         .to_string_lossy();
     let name = format!("HorizonPrivacyPatcher-{id}");
-    let action = format!(
-        "\"{}\" --watch \"{}\"",
-        plain_windows_path(&exe),
-        plain_windows_path(&target)
-    );
     let query = hidden_command("schtasks.exe")
         .args(["/Query", "/TN", &name])
         .stdout(Stdio::null())
         .stderr(Stdio::null())
         .status()
         .map_err(|e| e.to_string())?;
-    if query.success() {
+    let exists = query.success();
+    if !exists && !create_if_missing {
         return Ok(());
     }
-    let r = hidden_command("schtasks.exe")
-        .args([
-            "/Create", "/SC", "HOURLY", "/MO", "1", "/TN", &name, "/TR", &action,
-        ])
-        .output()
-        .map_err(|e| e.to_string())?;
-    if !r.status.success() {
-        return Err(format!(
-            "Could not configure hourly update task: {}",
-            String::from_utf8_lossy(&r.stderr)
+
+    let current = env::current_exe().map_err(|e| e.to_string())?;
+    ensure_gui_subsystem(&current)?;
+    let digest = hash_file(&current)?;
+    fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    let exe = dir.join(format!("updater-{digest}.exe"));
+    if exe.exists() {
+        if hash_file(&exe)? != digest {
+            return Err("Existing updater checksum mismatch".into());
+        }
+    } else {
+        let temp = dir.join(format!(
+            "updater-{}-{}.tmp",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map_err(|e| e.to_string())?
+                .as_nanos()
         ));
+        let result = (|| -> Result<(), String> {
+            fs::copy(&current, &temp).map_err(|e| e.to_string())?;
+            if hash_file(&temp)? != digest {
+                return Err("Updater copy checksum mismatch".into());
+            }
+            match fs::rename(&temp, &exe) {
+                Ok(()) => Ok(()),
+                Err(e)
+                    if exe.exists() && hash_file(&exe).ok().as_deref() == Some(digest.as_str()) =>
+                {
+                    let _ = e;
+                    Ok(())
+                }
+                Err(e) => Err(e.to_string()),
+            }
+        })();
+        let _ = fs::remove_file(&temp);
+        result?;
+    }
+    let exe_path = plain_windows_path(&exe);
+    let target_path = plain_windows_path(&target);
+    if exists {
+        // Preserve triggers/settings and refuse to overwrite a user-modified task.
+        let script = r#"$ErrorActionPreference='Stop'; $task=Get-ScheduledTask -TaskName $env:PATCH_TASK -TaskPath '\'; $a=@($task.Actions); if($a.Count -ne 1){throw 'Task action is not managed by Horizon Patcher'}; $p=[IO.Path]::GetFullPath(([string]$a[0].Execute).Trim('"')); $dir=[IO.Path]::GetFullPath($env:PATCH_DIR); $name=[IO.Path]::GetFileName($p); $expected='--watch "'+$env:PATCH_TARGET+'"'; if(-not [string]::Equals([IO.Path]::GetDirectoryName($p),$dir,[StringComparison]::OrdinalIgnoreCase) -or $name -notmatch '^updater(?:-[0-9a-f]{64})?\.exe$' -or $a[0].Arguments -ne $expected){throw 'Task action is not managed by Horizon Patcher'}; $new=New-ScheduledTaskAction -Execute $env:PATCH_EXE -Argument $expected; Set-ScheduledTask -TaskName $env:PATCH_TASK -TaskPath '\' -Action $new | Out-Null"#;
+        let out = ps(
+            script,
+            &[
+                ("PATCH_TASK", &name),
+                ("PATCH_DIR", &plain_windows_path(&dir)),
+                ("PATCH_TARGET", &target_path),
+                ("PATCH_EXE", &exe_path),
+            ],
+        )?;
+        if !out.status.success() {
+            return Err(format!(
+                "Could not update existing hourly task: {}",
+                String::from_utf8_lossy(&out.stderr)
+            ));
+        }
+    } else {
+        // Task Scheduler's schtasks /TR has a 261-character limit; use the
+        // native cmdlets so paths containing spaces and long names work.
+        let script = r#"$ErrorActionPreference='Stop'; $action=New-ScheduledTaskAction -Execute $env:PATCH_EXE -Argument ('--watch "'+$env:PATCH_TARGET+'"'); $trigger=New-ScheduledTaskTrigger -Once -At (Get-Date).AddHours(1) -RepetitionInterval (New-TimeSpan -Hours 1); Register-ScheduledTask -TaskName $env:PATCH_TASK -TaskPath '\' -Action $action -Trigger $trigger | Out-Null"#;
+        let out = ps(
+            script,
+            &[
+                ("PATCH_TASK", &name),
+                ("PATCH_TARGET", &target_path),
+                ("PATCH_EXE", &exe_path),
+            ],
+        )?;
+        if !out.status.success() {
+            return Err(format!(
+                "Could not configure hourly update task: {}",
+                String::from_utf8_lossy(&out.stderr)
+            ));
+        }
     }
     Ok(())
 }
@@ -462,11 +541,17 @@ fn run() -> Result<(), String> {
     let args: Vec<_> = env::args_os().collect();
     match args.get(1).and_then(|s| s.to_str()) {
         Some("--watch") => watch(Path::new(args.get(2).ok_or("Missing target")?)),
-        Some("--apply") => apply(Path::new(args.get(2).ok_or("Missing target")?)),
+        Some("--apply") => {
+            let target = Path::new(args.get(2).ok_or("Missing target")?);
+            apply(target)?;
+            install_task(target, false).map_err(|e| {
+                format!("Launcher patched, but existing updater was not refreshed: {e}")
+            })
+        }
         Some("--install") => {
             let target = Path::new(args.get(2).ok_or("Missing target")?);
             apply(target)?;
-            install_task(target).map_err(|e| {
+            install_task(target, true).map_err(|e| {
                 format!("Launcher patched, but automatic updates were not installed: {e}")
             })?;
             println!("Hourly update check installed.");
@@ -510,6 +595,31 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn scheduled_updater_requires_gui_executable() {
+        let path = env::temp_dir().join(format!("horizon-patcher-pe-test-{}", std::process::id()));
+        let mut image = vec![0u8; 256];
+        image[..2].copy_from_slice(b"MZ");
+        image[60..64].copy_from_slice(&(64u32).to_le_bytes());
+        image[64..68].copy_from_slice(b"PE\0\0");
+        image[88..90].copy_from_slice(&(0x20bu16).to_le_bytes());
+        image[156..158].copy_from_slice(&(3u16).to_le_bytes());
+        fs::write(&path, &image).unwrap();
+        assert!(
+            ensure_gui_subsystem(&path).is_err(),
+            "console binaries must be rejected"
+        );
+        image[156..158].copy_from_slice(&(2u16).to_le_bytes());
+        fs::write(&path, &image).unwrap();
+        assert!(ensure_gui_subsystem(&path).is_ok());
+        image[..2].copy_from_slice(b"NO");
+        fs::write(&path, &image).unwrap();
+        assert!(
+            ensure_gui_subsystem(&path).is_err(),
+            "invalid images must be rejected"
+        );
+        fs::remove_file(path).unwrap();
+    }
     #[test]
     fn refuses_unknown_binary() {
         assert!(eligible("abc", "ABC", None));
