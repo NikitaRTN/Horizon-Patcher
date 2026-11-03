@@ -15,10 +15,42 @@ index ac46ddc..75a5d2d 100644
  pub const NEEDS_OWNER: &str =
      "Sign in with a Microsoft account that owns Minecraft: Java Edition to play";
 diff --git a/launcher/src/backend.rs b/launcher/src/backend.rs
-index 3ff56b7..19f932e 100644
+index 3ff56b7..383f729 100644
 --- a/launcher/src/backend.rs
 +++ b/launcher/src/backend.rs
-@@ -2429,7 +2429,7 @@ pub fn client(tag: &str) -> Result<Command, String> {
+@@ -1528,7 +1528,17 @@ pub fn java_game(
+             instance.name
+         )
+     })?;
+-    let player = account::java_player()?;
++    let accounts = account::Accounts::load();
++    let player = match accounts.player() {
++        account::Player::Microsoft(_) => account::java_player()?,
++        account::Player::Offline(name) => crate::offline_java::player(&name)?,
++        account::Player::GameName => {
++            let name = fs::read_to_string(game_home().join("horizon-player.txt"))
++                .ok().and_then(|s| s.lines().find_map(|l| l.strip_prefix("name:").map(str::trim).map(str::to_owned)))
++                .filter(|n| account::valid_offline_name(n)).unwrap_or_else(|| "Player".to_owned());
++            crate::offline_java::player(&name)?
++        }
++    };
+     let minecraft = data_dir().join("minecraft");
+     let id = mojang::relative(&game.minecraft)?;
+     let natives = minecraft.join("natives").join(&id);
+@@ -1543,7 +1553,11 @@ pub fn java_game(
+     if !marker.is_file() {
+         let listed = crate::minecraft_versions::load()?;
+         let version = listed.find(&game.minecraft)?;
+-        download_version_for_owner(&version.id, &version.sha1, log)?;
++        if player.token == "0" {
++            crate::offline_java::import(&version.id, &version.sha1, &minecraft, &minecraft_folders(), &get_bytes, log)?;
++        } else {
++            download_version_for_owner(&version.id, &version.sha1, log)?;
++        }
+         fs::write(&marker, "").map_err(|e| format!("{}: {e}", marker.display()))?;
+     }
+     let mut start = game.minecraft.clone();
+@@ -2429,7 +2443,7 @@ pub fn client(tag: &str) -> Result<Command, String> {
  /// [`client`], playing as `who` for this launch only (`play --account`).
  pub fn client_as(tag: &str, who: Option<&account::Player>) -> Result<Command, String> {
      let (session, offline) = match who {
@@ -98,7 +130,7 @@ index a9bfbed..e79a127 100644
          let id = match consent.install_id.as_str() {
              "" => tr("No install ID: nothing has been collected").to_string(),
 diff --git a/launcher/src/home.rs b/launcher/src/home.rs
-index f104276..4a5e02a 100644
+index f104276..3f4129f 100644
 --- a/launcher/src/home.rs
 +++ b/launcher/src/home.rs
 @@ -151,44 +151,6 @@ impl Launcher {
@@ -152,7 +184,7 @@ index f104276..4a5e02a 100644
              ));
 -        match play_press(ready, self.owner, self.preparing || running) {
 +        // Offline play can prepare from existing local files; the Mojang download gate remains strict.
-+        let owner_for_play = if self.settings.dev_offline && !java {
++        let owner_for_play = if self.settings.dev_offline {
 +            Some(true)
 +        } else {
 +            self.owner
@@ -161,6 +193,63 @@ index f104276..4a5e02a 100644
              PlayPress::Nothing => play = disabled(play),
              PlayPress::Play => {
                  play = play.on_click(cx.listener(|this, _: &ClickEvent, _, cx| {
+diff --git a/launcher/src/java_launch.rs b/launcher/src/java_launch.rs
+index ef17c2e..527e9af 100644
+--- a/launcher/src/java_launch.rs
++++ b/launcher/src/java_launch.rs
+@@ -377,7 +377,7 @@ pub fn command(version: &Value, launch: &Launch) -> Result<Command, String> {
+         ("auth_session", format!("token:{}:{}", p.token, p.uuid)),
+         ("auth_xuid", p.xuid.clone()),
+         ("clientid", String::new()),
+-        ("user_type", "msa".into()),
++        ("user_type", if p.token == "0" { "legacy" } else { "msa" }.into()),
+         ("user_properties", "{}".into()),
+         ("version_name", id.to_string()),
+         (
+diff --git a/launcher/src/java_launch/tests.rs b/launcher/src/java_launch/tests.rs
+index 694a084..db72416 100644
+--- a/launcher/src/java_launch/tests.rs
++++ b/launcher/src/java_launch/tests.rs
+@@ -411,3 +411,27 @@ fn server_addresses_split_into_host_and_port() {
+         ("mc.example.org:x", 25565)
+     );
+ }
++
++#[test]
++fn offline_java_uses_legacy_user_type() {
++    let dir = scratch("offline-user-type");
++    let p = crate::offline_java::player("Notch").unwrap();
++    let launch = Launch {
++        minecraft: &dir.join("mc"),
++        game_dir: &dir.join("game"),
++        natives: &dir.join("natives"),
++        java: &dir.join("java"),
++        memory_mb: 1024,
++        jvm_args: &[],
++        player: &p,
++        os: "windows",
++        window: None,
++        server: None,
++    };
++    let command = command(&modern(), &launch).unwrap();
++    let a = args(&command);
++    let i = a.iter().position(|arg| arg == "--userType").unwrap();
++    assert_eq!(a[i + 1], "legacy");
++    let i = a.iter().position(|arg| arg == "--accessToken").unwrap();
++    assert_eq!(a[i + 1], "0");
++}
+diff --git a/launcher/src/lib.rs b/launcher/src/lib.rs
+index 975cbd0..780f9da 100644
+--- a/launcher/src/lib.rs
++++ b/launcher/src/lib.rs
+@@ -30,6 +30,7 @@ pub mod native_mods;
+ pub mod native_status;
+ pub mod nightly;
+ pub mod other_launchers;
++mod offline_java;
+ pub mod packs;
+ pub mod process;
+ pub mod proxy;
 diff --git a/launcher/src/main.rs b/launcher/src/main.rs
 index 44b41b7..0e07470 100644
 --- a/launcher/src/main.rs
@@ -246,6 +335,265 @@ index 44b41b7..0e07470 100644
      if let Err(error) = console::attach_for_cli() {
          eprintln!("Could not restore the launcher's terminal streams: {error}");
          std::process::exit(1);
+diff --git a/launcher/src/offline_java.rs b/launcher/src/offline_java.rs
+new file mode 100644
+index 0000000..9040f72
+--- /dev/null
++++ b/launcher/src/offline_java.rs
+@@ -0,0 +1,177 @@
++//! Offline Java launch using already installed, hash-checked Minecraft files.
++use crate::{mojang, sources};
++use serde_json::Value;
++use std::{
++    collections::HashMap,
++    fs,
++    path::{Path, PathBuf},
++    sync::atomic::{AtomicBool, Ordering},
++};
++
++pub(crate) fn player(name: &str) -> Result<crate::java_launch::Player, String> {
++    if !crate::account::valid_offline_name(name) {
++        return Err("Choose an offline name of 3 to 16 letters, digits or underscores".into());
++    }
++    Ok(crate::java_launch::Player {
++        name: name.to_string(),
++        uuid: format!("{:032x}", horizon_protocol::crypto::offline_uuid(name)),
++        token: "0".into(),
++        xuid: String::new(),
++    })
++}
++
++fn add(map: &mut HashMap<String, Vec<(PathBuf, String)>>, url: &str, path: PathBuf, hash: &str) {
++    map.entry(url.to_string())
++        .or_default()
++        .push((path, hash.to_string()));
++}
++
++/// Copy only files named by Mojang's verified manifest, never modify another launcher.
++pub(crate) fn import(
++    id: &str,
++    sha1: &str,
++    dest: &Path,
++    folders: &[PathBuf],
++    fetch_metadata: sources::Fetch,
++    log: &dyn Fn(String),
++) -> Result<(), String> {
++    let mut pins = sources::Pins::for_version(id, sha1);
++    let id_path = mojang::relative(id)?;
++    let manifest_file = dest
++        .join("versions")
++        .join(&id_path)
++        .join(format!("{id}.json"));
++    sources::fetch_manifest(&pins, &manifest_file, fetch_metadata, log)?;
++    let manifest: Value =
++        serde_json::from_slice(&fs::read(&manifest_file).map_err(|e| e.to_string())?)
++            .map_err(|e| format!("Invalid version file: {e}"))?;
++    let client = &manifest["downloads"]["client"];
++    pins.client_sha1 = client["sha1"]
++        .as_str()
++        .ok_or("Missing client hash")?
++        .to_owned();
++    let client_url = client["url"].as_str().ok_or("Missing client URL")?;
++    let found: Vec<_> = folders
++        .iter()
++        .filter_map(|f| sources::find(f, &pins).ok())
++        .collect();
++    if found.is_empty() {
++        return Err(format!("Minecraft {id} was not found locally. Install this version in ElyPrism or another launcher first."));
++    }
++    let mut map: HashMap<String, Vec<(PathBuf, String)>> = HashMap::new();
++    for source in &found {
++        add(
++            &mut map,
++            client_url,
++            source.client.clone(),
++            &pins.client_sha1,
++        );
++        let base = &source.base;
++        if let Some(libs) = manifest["libraries"].as_array() {
++            for lib in libs {
++                let downloads = &lib["downloads"];
++                let artifacts = downloads["artifact"]
++                    .as_object()
++                    .into_iter()
++                    .map(|_| &downloads["artifact"])
++                    .chain(
++                        downloads["classifiers"]
++                            .as_object()
++                            .into_iter()
++                            .flat_map(|v| v.values()),
++                    );
++                for a in artifacts {
++                    if let (Some(url), Some(path), Some(hash)) =
++                        (a["url"].as_str(), a["path"].as_str(), a["sha1"].as_str())
++                    {
++                        add(
++                            &mut map,
++                            url,
++                            base.join("libraries").join(mojang::relative(path)?),
++                            hash,
++                        );
++                    }
++                }
++            }
++        }
++        let config = &manifest["logging"]["client"]["file"];
++        if let (Some(url), Some(id), Some(hash)) = (
++            config["url"].as_str(),
++            config["id"].as_str(),
++            config["sha1"].as_str(),
++        ) {
++            add(
++                &mut map,
++                url,
++                base.join("assets/log_configs").join(mojang::relative(id)?),
++                hash,
++            );
++        }
++        let index = &manifest["assetIndex"];
++        if let (Some(url), Some(index_id), Some(hash)) = (
++            index["url"].as_str(),
++            index["id"].as_str(),
++            index["sha1"].as_str(),
++        ) {
++            let file = format!("{index_id}.json");
++            add(
++                &mut map,
++                url,
++                base.join("assets/indexes").join(mojang::relative(&file)?),
++                hash,
++            );
++        }
++    }
++    let missing = AtomicBool::new(false);
++    let local = |url: &str| -> Result<Vec<u8>, String> {
++        if let Some(paths) = map.get(url) {
++            for (path, hash) in paths {
++                if let Ok(data) = fs::read(path) {
++                    if sources::sha1_hex(&data) == *hash {
++                        return Ok(data);
++                    }
++                }
++            }
++        }
++        if let Some(rel) = url.strip_prefix("https://resources.download.minecraft.net/") {
++            let parts: Vec<_> = rel.split('/').collect();
++            if parts.len() == 2
++                && parts[1].len() == 40
++                && parts[1].bytes().all(|b| b.is_ascii_hexdigit())
++                && parts[0] == &parts[1][..2]
++            {
++                for source in &found {
++                    let path = source
++                        .base
++                        .join("assets/objects")
++                        .join(parts[0])
++                        .join(parts[1]);
++                    if let Ok(data) = fs::read(path) {
++                        if sources::sha1_hex(&data) == parts[1] {
++                            return Ok(data);
++                        }
++                    }
++                }
++            }
++        }
++        missing.store(true, Ordering::Relaxed);
++        Err("Required file is not available in the existing installation".into())
++    };
++    let os = match sources::Os::current() {
++        sources::Os::Linux => "linux",
++        sources::Os::MacOs => "osx",
++        sources::Os::Windows => "windows",
++    };
++    log(format!(
++        "Copying existing Minecraft {id} files into Horizon's private cache"
++    ));
++    mojang::download(&pins, dest, os, 8, &local, &mojang::CANCEL, log)?;
++    if missing.load(Ordering::Relaxed) {
++        return Err(format!("Minecraft {id} is incomplete in the existing installation. Start this version in ElyPrism or another launcher, then retry."));
++    }
++    Ok(())
++}
++
++#[cfg(test)]
++#[path = "offline_java_tests.rs"]
++mod tests;
+diff --git a/launcher/src/offline_java_tests.rs b/launcher/src/offline_java_tests.rs
+new file mode 100644
+index 0000000..8e83e18
+--- /dev/null
++++ b/launcher/src/offline_java_tests.rs
+@@ -0,0 +1,70 @@
++use super::*;
++use serde_json::json;
++
++#[test]
++fn offline_player_has_stable_vanilla_identity() {
++    let p = player("Notch").unwrap();
++    assert_eq!(p.uuid, "b50ad385829d3141a2167e7d7539ba7f");
++    assert_eq!(p.token, "0");
++    assert!(p.xuid.is_empty());
++    assert!(player("bad name!").is_err());
++}
++
++fn put(path: &Path, bytes: &[u8]) {
++    fs::create_dir_all(path.parent().unwrap()).unwrap();
++    fs::write(path, bytes).unwrap();
++}
++
++#[test]
++fn offline_import_copies_only_verified_existing_files() {
++    let nonce = std::time::SystemTime::now()
++        .duration_since(std::time::UNIX_EPOCH)
++        .unwrap()
++        .as_nanos();
++    let tmp = std::env::temp_dir().join(format!(
++        "horizon-offline-test-{}-{nonce}",
++        std::process::id()
++    ));
++    let source = tmp.join("ElyPrismLauncher");
++    let dest = tmp.join("horizon");
++    let client = b"client";
++    let library = b"library";
++    let asset = b"sound";
++    let hash = sources::sha1_hex(asset);
++    let index = json!({"objects":{"sounds/example":{"hash":hash,"size":asset.len()}}}).to_string();
++    let manifest = json!({"id":"1.21.1",
++        "downloads":{"client":{"url":"local:client","sha1":sources::sha1_hex(client),"size":client.len()}},
++        "libraries":[{"downloads":{"artifact":{"url":"local:lib","path":"a/b.jar","sha1":sources::sha1_hex(library),"size":library.len()}}}],
++        "assetIndex":{"id":"test","url":"local:index","sha1":sources::sha1_hex(index.as_bytes()),"size":index.len()}
++    }).to_string();
++    let sha = sources::sha1_hex(manifest.as_bytes());
++    let jar = source.join("libraries/com/mojang/minecraft/1.21.1/minecraft-1.21.1-client.jar");
++    let lib = source.join("libraries/a/b.jar");
++    let asset_path = source.join("assets/objects").join(&hash[..2]).join(&hash);
++    put(&jar, client);
++    put(&lib, library);
++    put(&source.join("assets/indexes/test.json"), index.as_bytes());
++    put(&asset_path, asset);
++    let fetch = |url: &str| {
++        if url.starts_with("https://piston-meta.mojang.com/") {
++            Ok(manifest.as_bytes().to_vec())
++        } else {
++            Err(format!("Unexpected network request: {url}"))
++        }
++    };
++    import("1.21.1", &sha, &dest, &[source.clone()], &fetch, &|_| {}).unwrap();
++    assert_eq!(
++        fs::read(dest.join("versions/1.21.1/1.21.1.jar")).unwrap(),
++        client
++    );
++    assert_eq!(fs::read(dest.join("libraries/a/b.jar")).unwrap(), library);
++    assert_eq!(
++        fs::read(dest.join("assets/objects").join(&hash[..2]).join(&hash)).unwrap(),
++        asset
++    );
++    assert_eq!(fs::read(&jar).unwrap(), client);
++    assert_eq!(fs::read(&lib).unwrap(), library);
++    fs::write(&asset_path, b"corrupt").unwrap();
++    assert!(import("1.21.1", &sha, &tmp.join("bad"), &[source], &fetch, &|_| {}).is_err());
++    fs::remove_dir_all(tmp).unwrap();
++}
 diff --git a/launcher/src/other_launchers.rs b/launcher/src/other_launchers.rs
 index 96aa620..f77a70a 100644
 --- a/launcher/src/other_launchers.rs
