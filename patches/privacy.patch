@@ -1,9 +1,9 @@
 diff --git a/launcher/src/account.rs b/launcher/src/account.rs
-index ac46ddc..75a5d2d 100644
+index 2407a2f..a1fe010 100644
 --- a/launcher/src/account.rs
 +++ b/launcher/src/account.rs
 @@ -21,9 +21,9 @@ use std::sync::{Mutex, OnceLock};
- use std::time::{Duration, SystemTime, UNIX_EPOCH};
+ use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
  
  /// The keychain service name every secret is stored under.
 -pub const SERVICE: &str = "dev.playhorizon.launcher";
@@ -15,10 +15,10 @@ index ac46ddc..75a5d2d 100644
  pub const NEEDS_OWNER: &str =
      "Sign in with a Microsoft account that owns Minecraft: Java Edition to play";
 diff --git a/launcher/src/backend.rs b/launcher/src/backend.rs
-index 3ff56b7..819a808 100644
+index ebd3f93..490fcbb 100644
 --- a/launcher/src/backend.rs
 +++ b/launcher/src/backend.rs
-@@ -1528,7 +1528,17 @@ pub fn java_game(
+@@ -1621,7 +1621,17 @@ pub fn java_game(
              instance.name
          )
      })?;
@@ -37,7 +37,7 @@ index 3ff56b7..819a808 100644
      let minecraft = data_dir().join("minecraft");
      let id = mojang::relative(&game.minecraft)?;
      let natives = minecraft.join("natives").join(&id);
-@@ -1543,7 +1553,11 @@ pub fn java_game(
+@@ -1636,7 +1646,11 @@ pub fn java_game(
      if !marker.is_file() {
          let listed = crate::minecraft_versions::load()?;
          let version = listed.find(&game.minecraft)?;
@@ -49,17 +49,20 @@ index 3ff56b7..819a808 100644
 +        }
          fs::write(&marker, "").map_err(|e| format!("{}: {e}", marker.display()))?;
      }
-     let mut start = game.minecraft.clone();
-@@ -2429,7 +2443,7 @@ pub fn client(tag: &str) -> Result<Command, String> {
+     // The Java the game needs, which also runs a loader's installer.
+@@ -2561,7 +2575,7 @@ pub fn client(tag: &str) -> Result<Command, String> {
  /// [`client`], playing as `who` for this launch only (`play --account`).
  pub fn client_as(tag: &str, who: Option<&account::Player>) -> Result<Command, String> {
-     let (session, offline) = match who {
+     let session = match who {
 -        None => account::session_for_game(&game_home(), false).map_err(|e| e.to_string()),
 +        None => account::session_for_game(&game_home(), true).map_err(|e| e.to_string()),
          Some(who) => account::session_for_game_as(&game_home(), who),
      }
      .map_err(|refused| format!("{refused} Sign in with `horizon-launcher account sign-in`."))?;
-@@ -3589,5 +3603,5 @@ mod tests {
+@@ -3799,8 +3813,8 @@ mod tests {
+         assert!(asked.lock().unwrap().is_empty());
+         let _ = fs::remove_dir_all(&dir);
+ 
 -        // In the sources: one call downloads the game, in `download_for`, and the only caller
 -        // of that asks the strict gate. Game-file hosts appear nowhere else.
 +        // Network game downloads go through `download_for` and its owner gate.
@@ -67,7 +70,7 @@ index 3ff56b7..819a808 100644
          let src = Path::new(env!("CARGO_MANIFEST_DIR")).join("src");
          let mut files = vec![src.clone()];
          let mut sources = Vec::new();
-@@ -3604,7 +3618,7 @@ mod tests {
+@@ -3817,7 +3831,7 @@ mod tests {
                  sources.push((name, in_tests, text));
              }
          }
@@ -76,7 +79,7 @@ index 3ff56b7..819a808 100644
              .iter()
              .filter(|(_, tests, _)| !tests)
              .flat_map(|(name, _, text)| {
-@@ -3612,7 +3626,19 @@ mod tests {
+@@ -3825,7 +3839,19 @@ mod tests {
                      .map(move |_| name.as_str())
              })
              .collect();
@@ -97,7 +100,7 @@ index 3ff56b7..819a808 100644
          let backend = &sources.iter().find(|(n, ..)| n == "backend.rs").unwrap().2;
          let body = |f: &str| {
              let start = backend.find(&format!("\nfn {f}(")).unwrap();
-@@ -3654,7 +3680,9 @@ pub fn {f}("
+@@ -3867,7 +3893,9 @@ pub fn {f}("
          ] {
              for (name, tests, text) in &sources {
                  assert!(
@@ -109,7 +112,7 @@ index 3ff56b7..819a808 100644
                  );
              }
 diff --git a/launcher/src/collection.rs b/launcher/src/collection.rs
-index a9bfbed..e79a127 100644
+index 281f5f8..5b6f864 100644
 --- a/launcher/src/collection.rs
 +++ b/launcher/src/collection.rs
 @@ -45,41 +45,6 @@ fn kind_id(prefix: &str, kind: DataKind) -> &'static str {
@@ -179,10 +182,10 @@ index a9bfbed..e79a127 100644
          let id = match consent.install_id.as_str() {
              "" => tr("No install ID: nothing has been collected").to_string(),
 diff --git a/launcher/src/home.rs b/launcher/src/home.rs
-index f104276..3f4129f 100644
+index 5d48c63..c0df808 100644
 --- a/launcher/src/home.rs
 +++ b/launcher/src/home.rs
-@@ -151,44 +151,6 @@ impl Launcher {
+@@ -157,44 +157,6 @@ impl Launcher {
                  ),
              });
          }
@@ -218,7 +221,7 @@ index f104276..3f4129f 100644
 -                            .child(tr("Got it"))
 -                            .on_click(cx.listener(|this, _: &ClickEvent, _, cx| {
 -                                this.settings.ping_notice_seen = true;
--                                this.settings.save();
+-                                this.save_settings();
 -                                cx.notify();
 -                            })),
 -                    ),
@@ -227,7 +230,7 @@ index f104276..3f4129f 100644
          hero
      }
  
-@@ -237,7 +199,13 @@ impl Launcher {
+@@ -243,7 +205,13 @@ impl Launcher {
              .child(label(
                  tr(if running { "Running" } else { "Play" }).to_string(),
              ));
@@ -243,10 +246,10 @@ index f104276..3f4129f 100644
              PlayPress::Play => {
                  play = play.on_click(cx.listener(|this, _: &ClickEvent, _, cx| {
 diff --git a/launcher/src/java_launch.rs b/launcher/src/java_launch.rs
-index ef17c2e..527e9af 100644
+index 3ba8d4a..f30f4a0 100644
 --- a/launcher/src/java_launch.rs
 +++ b/launcher/src/java_launch.rs
-@@ -377,7 +377,7 @@ pub fn command(version: &Value, launch: &Launch) -> Result<Command, String> {
+@@ -378,7 +378,7 @@ pub fn command(version: &Value, launch: &Launch) -> Result<Command, String> {
          ("auth_session", format!("token:{}:{}", p.token, p.uuid)),
          ("auth_xuid", p.xuid.clone()),
          ("clientid", String::new()),
@@ -288,10 +291,10 @@ index 694a084..db72416 100644
 +    assert_eq!(a[i + 1], "0");
 +}
 diff --git a/launcher/src/lib.rs b/launcher/src/lib.rs
-index 975cbd0..780f9da 100644
+index 8ebe7c2..10b04c6 100644
 --- a/launcher/src/lib.rs
 +++ b/launcher/src/lib.rs
-@@ -30,6 +30,7 @@ pub mod native_mods;
+@@ -35,6 +35,7 @@ pub mod native_mods;
  pub mod native_status;
  pub mod nightly;
  pub mod other_launchers;
@@ -300,10 +303,10 @@ index 975cbd0..780f9da 100644
  pub mod process;
  pub mod proxy;
 diff --git a/launcher/src/main.rs b/launcher/src/main.rs
-index 44b41b7..0e07470 100644
+index 62a582b..4beea6e 100644
 --- a/launcher/src/main.rs
 +++ b/launcher/src/main.rs
-@@ -419,6 +419,8 @@ impl Launcher {
+@@ -532,6 +532,8 @@ impl Launcher {
          })
          .detach();
          let mut settings = Settings::load();
@@ -312,7 +315,7 @@ index 44b41b7..0e07470 100644
          i18n::set(settings.language());
          if settings.minecraft_dir.is_none() {
              settings.minecraft_dir = backend::default_minecraft_dir();
-@@ -2435,7 +2437,6 @@ impl Launcher {
+@@ -2801,7 +2803,6 @@ impl Launcher {
              },
          ));
          let items = self.instance_items(heading, cx);
@@ -320,7 +323,7 @@ index 44b41b7..0e07470 100644
          let list = div()
              .flex()
              .flex_col()
-@@ -2451,8 +2452,6 @@ impl Launcher {
+@@ -2817,8 +2818,6 @@ impl Launcher {
          if !servers.is_empty() {
              list = list.child(heading(tr("SERVERS").into()));
          }
@@ -329,7 +332,7 @@ index 44b41b7..0e07470 100644
          for e in servers {
              let up = self.servers.is_up(&e.dir);
              let open = self.page == Page::Servers && self.servers.open.as_ref() == Some(&e.dir);
-@@ -2560,34 +2559,6 @@ impl Launcher {
+@@ -2926,34 +2925,6 @@ impl Launcher {
              }
              _ => {}
          }
@@ -353,7 +356,7 @@ index 44b41b7..0e07470 100644
 -                let hide = partner::hide_button("partner-hide", &t).on_click(cx.listener(
 -                    |this, _: &ClickEvent, _, cx| {
 -                        this.settings.partner_hidden = true;
--                        this.settings.save();
+-                        this.save_settings();
 -                        cx.notify();
 -                    },
 -                ));
@@ -364,7 +367,7 @@ index 44b41b7..0e07470 100644
          if !self.links.sponsor.is_empty() {
              foot = foot.child(link(
                  "sponsor",
-@@ -4897,6 +4868,19 @@ fn menus() -> Vec<Menu> {
+@@ -5470,6 +5441,19 @@ fn menus() -> Vec<Menu> {
  }
  
  fn main() {
@@ -644,10 +647,10 @@ index 0000000..8e83e18
 +    fs::remove_dir_all(tmp).unwrap();
 +}
 diff --git a/launcher/src/other_launchers.rs b/launcher/src/other_launchers.rs
-index 96aa620..f77a70a 100644
+index 7675683..b391333 100644
 --- a/launcher/src/other_launchers.rs
 +++ b/launcher/src/other_launchers.rs
-@@ -400,6 +400,8 @@ pub fn in_folder(dir: &Path, launcher: Option<&'static str>) -> Vec<Found> {
+@@ -405,6 +405,8 @@ pub fn in_folder(dir: &Path, launcher: Option<&'static str>) -> Vec<Found> {
      };
      let launcher = launcher.unwrap_or(if named(&["multimc", "MultiMC"]) {
          "MultiMC"
@@ -656,7 +659,7 @@ index 96aa620..f77a70a 100644
      } else if named(&["PrismLauncher"]) {
          "Prism Launcher"
      } else {
-@@ -422,7 +424,9 @@ pub fn scan(os: Os, folders: &Folders) -> Vec<Found> {
+@@ -427,7 +429,9 @@ pub fn scan(os: Os, folders: &Folders) -> Vec<Found> {
          seen.push(dir.clone());
          match launcher {
              OFFICIAL => found.extend(official_profiles(&dir)),
@@ -668,10 +671,10 @@ index 96aa620..f77a70a 100644
              ATLAUNCHER => found.extend(atlauncher_instances(&dir)),
              _ => {}
 diff --git a/launcher/src/other_launchers/tests.rs b/launcher/src/other_launchers/tests.rs
-index e3d2e0b..6d6245f 100644
+index 627c872..5d032e0 100644
 --- a/launcher/src/other_launchers/tests.rs
 +++ b/launcher/src/other_launchers/tests.rs
-@@ -312,3 +312,26 @@ fn atlauncher_loader_types_match_whatever_the_case() {
+@@ -315,3 +315,26 @@ fn atlauncher_loader_types_match_whatever_the_case() {
      assert!(atlauncher_loader(&json!({"loaderVersion": {"type": "Forge"}})).is_none());
      assert!(atlauncher_loader(&json!({})).is_none());
  }
@@ -730,7 +733,7 @@ index 396f508..4835103 100644
      assert!(got.contains(&"ATLauncher: C:/Users/r/AppData/Roaming/ATLauncher".into()));
  }
 diff --git a/launcher/src/telemetry.rs b/launcher/src/telemetry.rs
-index 06f9fee..67dc71a 100644
+index 357722f..cad86d4 100644
 --- a/launcher/src/telemetry.rs
 +++ b/launcher/src/telemetry.rs
 @@ -43,7 +43,7 @@ pub const NEVER: &str = "Never sent: your account name or UUID, world names, ser
