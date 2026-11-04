@@ -77,6 +77,10 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Upstream changed: patch requires review' }
           git -C upstream apply $patch
           if ($LASTEXITCODE -ne 0) { throw 'Patch application failed' }
+      - name: Check partner banners are absent
+        if: steps.prepare.outputs.publish == 'true'
+        shell: pwsh
+        run: ./tests/no-partner.ps1 -Source upstream/launcher/src
       - name: Compute launcher cache key
         if: steps.prepare.outputs.publish == 'true'
         id: launcher-key
