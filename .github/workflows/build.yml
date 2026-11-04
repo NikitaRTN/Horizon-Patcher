@@ -93,6 +93,16 @@ jobs:
         with:
           path: cached-launcher/horizon-launcher.exe
           key: launcher-v1-${{ env.UPSTREAM_COMMIT }}-${{ env.OFFICIAL_SHA256 }}-${{ hashFiles('patches/privacy.patch') }}-${{ steps.launcher-key.outputs.hash }}
+      # Cache compiled third-party/path dependencies independently of the exact
+      # launcher payload. A changed patch still rebuilds and runs all tests.
+      # PRs may read trusted main caches but never populate main's cache.
+      - name: Restore Cargo dependency cache
+        if: steps.prepare.outputs.publish == 'true'
+        uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
+        with:
+          workspaces: upstream/launcher -> target
+          env-vars: CARGO CC CFLAGS CXX CMAKE RUST HORIZON_MSA_CLIENT_ID
+          save-if: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && steps.launcher-cache.outputs.cache-hit != 'true' }}
       - name: Test and build launcher
         if: steps.prepare.outputs.publish == 'true' && steps.launcher-cache.outputs.cache-hit != 'true'
         working-directory: upstream/launcher
