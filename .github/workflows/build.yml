@@ -126,6 +126,8 @@ jobs:
           # invocations can recompile unchanged crates repeatedly on Windows.
           # Check the output too: Cargo succeeds if a required test disappears.
           $requiredTests = @(
+            'patcher_compatibility_release_parsing',
+            'patcher_compatibility_never_guesses',
             'elyprism_windows_instances_are_discovered',
             'the_developer_option_plays_offline_names_without_an_owner',
             'offline_player_has_stable_vanilla_identity',
