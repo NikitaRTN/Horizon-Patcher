@@ -131,12 +131,14 @@ jobs:
             'offline_player_has_stable_vanilla_identity',
             'offline_import_copies_only_verified_existing_files',
             'offline_java_uses_legacy_user_type',
-            'mojang_downloads_only_for_an_owner'
+            'mojang_downloads_only_for_an_owner',
+            'the_cli_requires_a_prepared_version_for_offline_play',
+            'the_mcp_server_requires_a_prepared_version_for_offline_play'
           )
-          cargo test --release --locked -- --color never | Tee-Object -Variable testOutput
+          cargo test --release --locked --no-fail-fast -- --color never | Tee-Object -Variable testOutput
           if ($LASTEXITCODE -ne 0) { throw 'Launcher test suite failed' }
           foreach ($test in $requiredTests) {
-            $pattern = '^test\s+[^\s]*::' + [regex]::Escape($test) + '\s+\.\.\.\s+ok\s*$'
+            $pattern = '^test\s+(?:[^\s]*::)?' + [regex]::Escape($test) + '\s+\.\.\.\s+ok\s*$'
             $found = @($testOutput | Where-Object { $_ -match $pattern })
             if ($found.Count -lt 1) { throw "Required test $test did not run successfully" }
           }
