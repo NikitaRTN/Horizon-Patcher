@@ -1,5 +1,5 @@
 diff --git a/launcher/src/account.rs b/launcher/src/account.rs
-index 2407a2f..a1fe010 100644
+index 58b898c..1f7a766 100644
 --- a/launcher/src/account.rs
 +++ b/launcher/src/account.rs
 @@ -21,9 +21,9 @@ use std::sync::{Mutex, OnceLock};
@@ -15,10 +15,10 @@ index 2407a2f..a1fe010 100644
  pub const NEEDS_OWNER: &str =
      "Sign in with a Microsoft account that owns Minecraft: Java Edition to play";
 diff --git a/launcher/src/backend.rs b/launcher/src/backend.rs
-index ebd3f93..490fcbb 100644
+index d5bdb66..208b773 100644
 --- a/launcher/src/backend.rs
 +++ b/launcher/src/backend.rs
-@@ -1621,7 +1621,17 @@ pub fn java_game(
+@@ -2019,7 +2019,17 @@ pub fn java_game(
              instance.name
          )
      })?;
@@ -37,7 +37,7 @@ index ebd3f93..490fcbb 100644
      let minecraft = data_dir().join("minecraft");
      let id = mojang::relative(&game.minecraft)?;
      let natives = minecraft.join("natives").join(&id);
-@@ -1636,7 +1646,11 @@ pub fn java_game(
+@@ -2034,7 +2044,11 @@ pub fn java_game(
      if !marker.is_file() {
          let listed = crate::minecraft_versions::load()?;
          let version = listed.find(&game.minecraft)?;
@@ -50,16 +50,16 @@ index ebd3f93..490fcbb 100644
          fs::write(&marker, "").map_err(|e| format!("{}: {e}", marker.display()))?;
      }
      // The Java the game needs, which also runs a loader's installer.
-@@ -2561,7 +2575,7 @@ pub fn client(tag: &str) -> Result<Command, String> {
- /// [`client`], playing as `who` for this launch only (`play --account`).
- pub fn client_as(tag: &str, who: Option<&account::Player>) -> Result<Command, String> {
+@@ -2975,7 +2989,7 @@ pub fn client_as(tag: &str, who: Option<&account::Player>) -> Result<Command, St
+         return Err(error);
+     }
      let session = match who {
 -        None => account::session_for_game(&game_home(), false).map_err(|e| e.to_string()),
 +        None => account::session_for_game(&game_home(), true).map_err(|e| e.to_string()),
          Some(who) => account::session_for_game_as(&game_home(), who),
      }
-     .map_err(|refused| format!("{refused} Sign in with `horizon-launcher account sign-in`."))?;
-@@ -3799,8 +3813,8 @@ mod tests {
+     .map_err(|refused| format!("{refused} {}", crate::i18n::tr(SIGN_IN_HINT)))?;
+@@ -4553,8 +4567,8 @@ mod tests {
          assert!(asked.lock().unwrap().is_empty());
          let _ = fs::remove_dir_all(&dir);
  
@@ -70,7 +70,7 @@ index ebd3f93..490fcbb 100644
          let src = Path::new(env!("CARGO_MANIFEST_DIR")).join("src");
          let mut files = vec![src.clone()];
          let mut sources = Vec::new();
-@@ -3817,7 +3831,7 @@ mod tests {
+@@ -4571,7 +4585,7 @@ mod tests {
                  sources.push((name, in_tests, text));
              }
          }
@@ -79,7 +79,7 @@ index ebd3f93..490fcbb 100644
              .iter()
              .filter(|(_, tests, _)| !tests)
              .flat_map(|(name, _, text)| {
-@@ -3825,7 +3839,19 @@ mod tests {
+@@ -4579,7 +4593,19 @@ mod tests {
                      .map(move |_| name.as_str())
              })
              .collect();
@@ -100,7 +100,7 @@ index ebd3f93..490fcbb 100644
          let backend = &sources.iter().find(|(n, ..)| n == "backend.rs").unwrap().2;
          let body = |f: &str| {
              let start = backend.find(&format!("\nfn {f}(")).unwrap();
-@@ -3867,7 +3893,9 @@ pub fn {f}("
+@@ -4621,7 +4647,9 @@ pub fn {f}("
          ] {
              for (name, tests, text) in &sources {
                  assert!(
@@ -182,7 +182,7 @@ index 281f5f8..5b6f864 100644
          let id = match consent.install_id.as_str() {
              "" => tr("No install ID: nothing has been collected").to_string(),
 diff --git a/launcher/src/frame.rs b/launcher/src/frame.rs
-index 9cc84af..fa145c0 100644
+index 1671ff1..3962896 100644
 --- a/launcher/src/frame.rs
 +++ b/launcher/src/frame.rs
 @@ -274,7 +274,7 @@ impl Launcher {
@@ -194,7 +194,7 @@ index 9cc84af..fa145c0 100644
          let t = self.theme;
          let soft = self.look.accent_soft;
          self.load_packs();
-@@ -415,36 +415,6 @@ impl Launcher {
+@@ -443,36 +443,6 @@ impl Launcher {
              _ => {}
          }
  
@@ -401,7 +401,7 @@ index 694a084..db72416 100644
 +    assert_eq!(a[i + 1], "0");
 +}
 diff --git a/launcher/src/lib.rs b/launcher/src/lib.rs
-index 8ebe7c2..10b04c6 100644
+index 84827c2..c93ee36 100644
 --- a/launcher/src/lib.rs
 +++ b/launcher/src/lib.rs
 @@ -35,6 +35,7 @@ pub mod native_mods;
@@ -413,10 +413,10 @@ index 8ebe7c2..10b04c6 100644
  pub mod process;
  pub mod proxy;
 diff --git a/launcher/src/main.rs b/launcher/src/main.rs
-index 62a582b..f78994e 100644
+index 1ae8144..2001e9b 100644
 --- a/launcher/src/main.rs
 +++ b/launcher/src/main.rs
-@@ -507,31 +507,9 @@ impl Launcher {
+@@ -513,31 +513,9 @@ impl Launcher {
              }
          })
          .detach();
@@ -450,7 +450,7 @@ index 62a582b..f78994e 100644
          i18n::set(settings.language());
          if settings.minecraft_dir.is_none() {
              settings.minecraft_dir = backend::default_minecraft_dir();
-@@ -2801,7 +2779,6 @@ impl Launcher {
+@@ -2831,7 +2809,6 @@ impl Launcher {
              },
          ));
          let items = self.instance_items(heading, cx);
@@ -458,7 +458,7 @@ index 62a582b..f78994e 100644
          let list = div()
              .flex()
              .flex_col()
-@@ -2817,8 +2794,6 @@ impl Launcher {
+@@ -2847,8 +2824,6 @@ impl Launcher {
          if !servers.is_empty() {
              list = list.child(heading(tr("SERVERS").into()));
          }
@@ -467,7 +467,7 @@ index 62a582b..f78994e 100644
          for e in servers {
              let up = self.servers.is_up(&e.dir);
              let open = self.page == Page::Servers && self.servers.open.as_ref() == Some(&e.dir);
-@@ -2926,34 +2901,6 @@ impl Launcher {
+@@ -2979,34 +2954,6 @@ impl Launcher {
              }
              _ => {}
          }
@@ -502,7 +502,7 @@ index 62a582b..f78994e 100644
          if !self.links.sponsor.is_empty() {
              foot = foot.child(link(
                  "sponsor",
-@@ -5470,6 +5417,19 @@ fn menus() -> Vec<Menu> {
+@@ -5608,6 +5555,19 @@ fn menus() -> Vec<Menu> {
  }
  
  fn main() {
@@ -782,10 +782,10 @@ index 0000000..8e83e18
 +    fs::remove_dir_all(tmp).unwrap();
 +}
 diff --git a/launcher/src/other_launchers.rs b/launcher/src/other_launchers.rs
-index 7675683..b391333 100644
+index 81d3927..25b41bb 100644
 --- a/launcher/src/other_launchers.rs
 +++ b/launcher/src/other_launchers.rs
-@@ -405,6 +405,8 @@ pub fn in_folder(dir: &Path, launcher: Option<&'static str>) -> Vec<Found> {
+@@ -437,6 +437,8 @@ pub fn in_folder(dir: &Path, launcher: Option<&'static str>) -> Vec<Found> {
      };
      let launcher = launcher.unwrap_or(if named(&["multimc", "MultiMC"]) {
          "MultiMC"
@@ -794,7 +794,7 @@ index 7675683..b391333 100644
      } else if named(&["PrismLauncher"]) {
          "Prism Launcher"
      } else {
-@@ -427,7 +429,9 @@ pub fn scan(os: Os, folders: &Folders) -> Vec<Found> {
+@@ -459,7 +461,9 @@ pub fn scan(os: Os, folders: &Folders) -> Vec<Found> {
          seen.push(dir.clone());
          match launcher {
              OFFICIAL => found.extend(official_profiles(&dir)),
@@ -806,12 +806,12 @@ index 7675683..b391333 100644
              ATLAUNCHER => found.extend(atlauncher_instances(&dir)),
              _ => {}
 diff --git a/launcher/src/other_launchers/tests.rs b/launcher/src/other_launchers/tests.rs
-index 627c872..5d032e0 100644
+index 59e6b45..f2a2cf8 100644
 --- a/launcher/src/other_launchers/tests.rs
 +++ b/launcher/src/other_launchers/tests.rs
-@@ -315,3 +315,26 @@ fn atlauncher_loader_types_match_whatever_the_case() {
-     assert!(atlauncher_loader(&json!({"loaderVersion": {"type": "Forge"}})).is_none());
-     assert!(atlauncher_loader(&json!({})).is_none());
+@@ -404,3 +404,26 @@ fn curseforge_instances_read_their_version_and_loader() {
+     assert_eq!(modrinth[0].minecraft, None);
+     let _ = fs::remove_dir_all(&root);
  }
 +
 +#[test]
@@ -837,10 +837,10 @@ index 627c872..5d032e0 100644
 +    let _ = fs::remove_dir_all(root);
 +}
 diff --git a/launcher/src/servers_page.rs b/launcher/src/servers_page.rs
-index 03a9072..272e7da 100644
+index dbc2761..a556068 100644
 --- a/launcher/src/servers_page.rs
 +++ b/launcher/src/servers_page.rs
-@@ -1358,34 +1358,12 @@ impl Launcher {
+@@ -1365,34 +1365,12 @@ impl Launcher {
          {
              page = page.child(self.problem_notice(p, cx));
          }
@@ -876,7 +876,7 @@ index 03a9072..272e7da 100644
          }
          let mut list = div().flex().flex_col().border_t_1().border_color(t.rule);
          for (i, e) in self.servers.list.clone().into_iter().enumerate() {
-@@ -1431,7 +1409,7 @@ impl Launcher {
+@@ -1438,7 +1416,7 @@ impl Launcher {
                  &t,
              ));
          }
@@ -886,18 +886,18 @@ index 03a9072..272e7da 100644
  
      fn add_server_folder(&mut self, cx: &mut Context<Self>) {
 diff --git a/launcher/src/sources.rs b/launcher/src/sources.rs
-index 5c2d31b..ab776ee 100644
+index 7d2c9a6..0c6bb1a 100644
 --- a/launcher/src/sources.rs
 +++ b/launcher/src/sources.rs
-@@ -143,6 +143,7 @@ pub fn known_folders(os: Os, f: &Folders) -> Vec<(&'static str, PathBuf)> {
+@@ -146,6 +146,7 @@ pub fn known_folders(os: Os, f: &Folders) -> Vec<(&'static str, PathBuf)> {
          Os::Windows => vec![
              (OFFICIAL, f.data.join(".minecraft")),
              ("Prism Launcher", f.data.join("PrismLauncher")),
 +            ("ElyPrism", f.data.join("ElyPrismLauncher")),
              ("Modrinth App", f.data.join("ModrinthApp")),
              ("ATLauncher", f.data.join("ATLauncher")),
-         ],
-@@ -254,6 +255,7 @@ fn launcher_of(path: &Path) -> Option<&'static str> {
+             ("Dawn Client", f.data.join(".dawn")),
+@@ -266,6 +267,7 @@ fn launcher_of(path: &Path) -> Option<&'static str> {
          .filter_map(|name| name.to_str())
          .find_map(|name| match name {
              "PrismLauncher" => Some("Prism Launcher"),
@@ -906,15 +906,16 @@ index 5c2d31b..ab776ee 100644
              "ModrinthApp" | "com.modrinth.theseus" => Some("the Modrinth App"),
              "atlauncher" | "ATLauncher" => Some("ATLauncher"),
 diff --git a/launcher/src/sources_tests.rs b/launcher/src/sources_tests.rs
-index 396f508..4835103 100644
+index fbf4b06..fc80811 100644
 --- a/launcher/src/sources_tests.rs
 +++ b/launcher/src/sources_tests.rs
-@@ -548,5 +548,6 @@ fn each_system_has_its_launcher_folders() {
+@@ -578,6 +578,7 @@ fn each_system_has_its_launcher_folders() {
          got[0],
          "the official launcher: C:/Users/r/AppData/Roaming/.minecraft"
      );
 +    assert!(got.contains(&"ElyPrism: C:/Users/r/AppData/Roaming/ElyPrismLauncher".into()));
      assert!(got.contains(&"ATLauncher: C:/Users/r/AppData/Roaming/ATLauncher".into()));
+     assert!(got.contains(&"Dawn Client: C:/Users/r/AppData/Roaming/.dawn".into()));
  }
 diff --git a/launcher/src/telemetry.rs b/launcher/src/telemetry.rs
 index 357722f..cad86d4 100644
