@@ -79,6 +79,14 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Upstream changed: patch requires review' }
           git -C upstream apply $patch
           if ($LASTEXITCODE -ne 0) { throw 'Patch application failed' }
+      - name: Validate and update translations for the privacy patch
+        if: steps.prepare.outputs.publish == 'true'
+        shell: pwsh
+        run: |
+          python -m unittest discover -s tests -p test_prune_translations.py -v
+          if ($LASTEXITCODE -ne 0) { throw 'Translation script tests failed' }
+          python tests/prune_translations.py upstream/launcher/lang
+          if ($LASTEXITCODE -ne 0) { throw 'Could not update translations safely' }
       - name: Check partner banners are absent
         if: steps.prepare.outputs.publish == 'true'
         shell: pwsh
@@ -98,7 +106,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: cached-launcher/horizon-launcher.exe
-          key: launcher-v2-${{ env.UPSTREAM_COMMIT }}-${{ env.OFFICIAL_SHA256 }}-${{ hashFiles('patches/privacy.patch') }}-${{ steps.launcher-key.outputs.hash }}
+          key: launcher-v2-${{ env.UPSTREAM_COMMIT }}-${{ env.OFFICIAL_SHA256 }}-${{ hashFiles('patches/privacy.patch', 'tests/prune_translations.py') }}-${{ steps.launcher-key.outputs.hash }}
       # Cache compiled third-party/path dependencies independently of the exact
       # launcher payload. A changed patch still rebuilds and runs all tests.
       # PRs may read trusted main caches but never populate main's cache.
