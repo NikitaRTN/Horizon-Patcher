@@ -13,6 +13,8 @@ concurrency:
   cancel-in-progress: false
 permissions:
   contents: read
+  actions: read
+  pull-requests: read
 jobs:
   build:
     runs-on: windows-latest
@@ -100,25 +102,41 @@ jobs:
           $sha = [Security.Cryptography.SHA256]::Create()
           $key = [BitConverter]::ToString($sha.ComputeHash($bytes)).Replace('-', '').ToLowerInvariant()
           "hash=$key" >> $env:GITHUB_OUTPUT
-      - name: Restore tested launcher cache
+          "cache_key=launcher-v2-${{ env.UPSTREAM_COMMIT }}-${{ env.OFFICIAL_SHA256 }}-${{ hashFiles('patches/privacy.patch', 'patches/privacy.base', 'tests/apply_patch.py', 'tests/test_apply_patch.py', 'tests/prune_translations.py') }}-$key" >> $env:GITHUB_OUTPUT
+      - name: Test verified PR artifact rules
         if: steps.prepare.outputs.publish == 'true'
+        shell: pwsh
+        run: |
+          python -m unittest discover -s tests -p test_reuse_pr_build.py -v
+          if ($LASTEXITCODE -ne 0) { throw 'PR artifact validation tests failed' }
+      - name: Reuse verified PR launcher after merge
+        if: steps.prepare.outputs.publish == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        id: pr-reuse
+        shell: pwsh
+        env:
+          LAUNCHER_CACHE_KEY: ${{ steps.launcher-key.outputs.cache_key }}
+        run: |
+          python tests/reuse_pr_build.py reuse
+          if ($LASTEXITCODE -ne 0) { throw 'PR artifact selection failed unexpectedly' }
+      - name: Restore tested launcher cache
+        if: steps.prepare.outputs.publish == 'true' && steps.pr-reuse.outputs.reused != 'true'
         id: launcher-cache
         uses: actions/cache/restore@v4
         with:
           path: cached-launcher/horizon-launcher.exe
-          key: launcher-v2-${{ env.UPSTREAM_COMMIT }}-${{ env.OFFICIAL_SHA256 }}-${{ hashFiles('patches/privacy.patch', 'patches/privacy.base', 'tests/apply_patch.py', 'tests/test_apply_patch.py', 'tests/prune_translations.py') }}-${{ steps.launcher-key.outputs.hash }}
+          key: ${{ steps.launcher-key.outputs.cache_key }}
       # Cache compiled third-party/path dependencies independently of the exact
       # launcher payload. A changed patch still rebuilds and runs all tests.
       # PRs may read trusted main caches but never populate main's cache.
       - name: Restore Cargo dependency cache
-        if: steps.prepare.outputs.publish == 'true'
+        if: steps.prepare.outputs.publish == 'true' && steps.pr-reuse.outputs.reused != 'true' && steps.launcher-cache.outputs.cache-hit != 'true'
         uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
         with:
           workspaces: upstream/launcher -> target
           env-vars: CARGO CC CFLAGS CXX CMAKE RUST HORIZON_MSA_CLIENT_ID
           save-if: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && steps.launcher-cache.outputs.cache-hit != 'true' }}
       - name: Test and build launcher
-        if: steps.prepare.outputs.publish == 'true' && steps.launcher-cache.outputs.cache-hit != 'true'
+        if: steps.prepare.outputs.publish == 'true' && steps.pr-reuse.outputs.reused != 'true' && steps.launcher-cache.outputs.cache-hit != 'true'
         working-directory: upstream/launcher
         shell: pwsh
         run: |
@@ -204,11 +222,29 @@ jobs:
           ./tests/scheduler-migration.ps1 -Patcher $exe -Official (Resolve-Path official/horizon-launcher.exe).Path
           ./tests/startup-update.ps1
       - name: Save tested launcher cache
-        if: steps.prepare.outputs.publish == 'true' && steps.launcher-cache.outputs.cache-hit != 'true'
+        if: steps.prepare.outputs.publish == 'true' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && steps.launcher-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with:
           path: cached-launcher/horizon-launcher.exe
-          key: ${{ steps.launcher-cache.outputs.cache-primary-key }}
+          key: ${{ steps.launcher-key.outputs.cache_key }}
+      # Upload only after the entire build and smoke-test sequence passes. Fork PR artifacts
+      # are never eligible for a privileged main/release run.
+      - name: Describe tested same-repository PR launcher
+        if: steps.prepare.outputs.publish == 'true' && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        shell: pwsh
+        env:
+          LAUNCHER_CACHE_KEY: ${{ steps.launcher-key.outputs.cache_key }}
+        run: |
+          python tests/reuse_pr_build.py write
+          if ($LASTEXITCODE -ne 0) { throw 'Could not describe tested launcher' }
+      - name: Upload tested PR launcher
+        if: steps.prepare.outputs.publish == 'true' && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        uses: actions/upload-artifact@v4
+        with:
+          name: verified-launcher-${{ github.run_attempt }}
+          path: pr-launcher/
+          if-no-files-found: error
+          retention-days: 7
       - uses: actions/upload-artifact@v4
         if: steps.prepare.outputs.publish == 'true'
         with:
