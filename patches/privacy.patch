@@ -15,10 +15,10 @@ index 58b898c..1f7a766 100644
  pub const NEEDS_OWNER: &str =
      "Sign in with a Microsoft account that owns Minecraft: Java Edition to play";
 diff --git a/launcher/src/backend.rs b/launcher/src/backend.rs
-index d5bdb66..208b773 100644
+index 2970c7b..17ad3ec 100644
 --- a/launcher/src/backend.rs
 +++ b/launcher/src/backend.rs
-@@ -2019,7 +2019,17 @@ pub fn java_game(
+@@ -2033,7 +2033,17 @@ pub fn java_game(
              instance.name
          )
      })?;
@@ -37,7 +37,7 @@ index d5bdb66..208b773 100644
      let minecraft = data_dir().join("minecraft");
      let id = mojang::relative(&game.minecraft)?;
      let natives = minecraft.join("natives").join(&id);
-@@ -2034,7 +2044,11 @@ pub fn java_game(
+@@ -2048,7 +2058,11 @@ pub fn java_game(
      if !marker.is_file() {
          let listed = crate::minecraft_versions::load()?;
          let version = listed.find(&game.minecraft)?;
@@ -50,7 +50,7 @@ index d5bdb66..208b773 100644
          fs::write(&marker, "").map_err(|e| format!("{}: {e}", marker.display()))?;
      }
      // The Java the game needs, which also runs a loader's installer.
-@@ -2975,7 +2989,7 @@ pub fn client_as(tag: &str, who: Option<&account::Player>) -> Result<Command, St
+@@ -3008,7 +3022,7 @@ pub fn client_as(tag: &str, who: Option<&account::Player>) -> Result<Command, St
          return Err(error);
      }
      let session = match who {
@@ -59,7 +59,15 @@ index d5bdb66..208b773 100644
          Some(who) => account::session_for_game_as(&game_home(), who),
      }
      .map_err(|refused| format!("{refused} {}", crate::i18n::tr(SIGN_IN_HINT)))?;
-@@ -4553,8 +4567,8 @@ mod tests {
+@@ -4031,6 +4045,7 @@ pub enum Msg {
+     Exit(Job, Result<(), String>),
+     /// Boxed: two releases, the largest message by far.
+     Updates(Result<Box<Updates>, String>),
++    PatcherCompatibility(crate::smart_updates::Compatibility),
+     LauncherProgress(f32),
+     LauncherUpdated(Result<Option<Staged>, String>),
+     /// `reuse_prepared_everywhere` prepared these versions.
+@@ -4657,8 +4672,8 @@ mod tests {
          assert!(asked.lock().unwrap().is_empty());
          let _ = fs::remove_dir_all(&dir);
  
@@ -70,7 +78,7 @@ index d5bdb66..208b773 100644
          let src = Path::new(env!("CARGO_MANIFEST_DIR")).join("src");
          let mut files = vec![src.clone()];
          let mut sources = Vec::new();
-@@ -4571,7 +4585,7 @@ mod tests {
+@@ -4675,7 +4690,7 @@ mod tests {
                  sources.push((name, in_tests, text));
              }
          }
@@ -79,7 +87,7 @@ index d5bdb66..208b773 100644
              .iter()
              .filter(|(_, tests, _)| !tests)
              .flat_map(|(name, _, text)| {
-@@ -4579,7 +4593,19 @@ mod tests {
+@@ -4683,7 +4698,19 @@ mod tests {
                      .map(move |_| name.as_str())
              })
              .collect();
@@ -100,7 +108,7 @@ index d5bdb66..208b773 100644
          let backend = &sources.iter().find(|(n, ..)| n == "backend.rs").unwrap().2;
          let body = |f: &str| {
              let start = backend.find(&format!("\nfn {f}(")).unwrap();
-@@ -4621,7 +4647,9 @@ pub fn {f}("
+@@ -4725,7 +4752,9 @@ pub fn {f}("
          ] {
              for (name, tests, text) in &sources {
                  assert!(
@@ -182,7 +190,7 @@ index 281f5f8..5b6f864 100644
          let id = match consent.install_id.as_str() {
              "" => tr("No install ID: nothing has been collected").to_string(),
 diff --git a/launcher/src/frame.rs b/launcher/src/frame.rs
-index 1671ff1..3962896 100644
+index 782cfd6..b401bec 100644
 --- a/launcher/src/frame.rs
 +++ b/launcher/src/frame.rs
 @@ -274,7 +274,7 @@ impl Launcher {
@@ -194,7 +202,7 @@ index 1671ff1..3962896 100644
          let t = self.theme;
          let soft = self.look.accent_soft;
          self.load_packs();
-@@ -443,36 +443,6 @@ impl Launcher {
+@@ -470,36 +470,7 @@ impl Launcher {
              _ => {}
          }
  
@@ -228,6 +236,7 @@ index 1671ff1..3962896 100644
 -            foot = foot.child(side);
 -        }
 -
++        if let Some(card) = self.patcher_update_card() { foot = foot.child(card); }
          if !self.links.discord.is_empty() {
              let url = self.links.discord.clone();
              foot = foot.child(keyboard(
@@ -401,22 +410,38 @@ index 694a084..db72416 100644
 +    assert_eq!(a[i + 1], "0");
 +}
 diff --git a/launcher/src/lib.rs b/launcher/src/lib.rs
-index 84827c2..c93ee36 100644
+index 13428a4..201c403 100644
 --- a/launcher/src/lib.rs
 +++ b/launcher/src/lib.rs
-@@ -35,6 +35,7 @@ pub mod native_mods;
+@@ -36,6 +36,7 @@ pub mod native_mods;
  pub mod native_status;
  pub mod nightly;
  pub mod other_launchers;
 +mod offline_java;
  pub mod packs;
+ pub mod pictures;
  pub mod process;
- pub mod proxy;
+@@ -49,6 +50,7 @@ pub mod setup_args;
+ pub mod shop;
+ pub mod shortcut;
+ pub mod signed;
++pub mod smart_updates;
+ pub mod skins;
+ pub mod sources;
+ pub mod tailscale;
 diff --git a/launcher/src/main.rs b/launcher/src/main.rs
-index 1ae8144..2001e9b 100644
+index d93cda3..c08dab2 100644
 --- a/launcher/src/main.rs
 +++ b/launcher/src/main.rs
-@@ -513,31 +513,9 @@ impl Launcher {
+@@ -240,6 +240,7 @@ struct Launcher {
+     checked: Option<Instant>,
+     update_error: Option<String>,
+     self_update: SelfUpdate,
++    patcher_compatibility: Option<horizon_launcher::smart_updates::Compatibility>,
+     self_update_hidden: bool,
+     /// The Horizon version being installed as an update, and whether it becomes the selected one.
+     update_install: Option<(String, bool)>,
+@@ -524,31 +525,9 @@ impl Launcher {
              }
          })
          .detach();
@@ -450,7 +475,85 @@ index 1ae8144..2001e9b 100644
          i18n::set(settings.language());
          if settings.minecraft_dir.is_none() {
              settings.minecraft_dir = backend::default_minecraft_dir();
-@@ -2831,7 +2809,6 @@ impl Launcher {
+@@ -602,6 +581,7 @@ impl Launcher {
+             self_update: horizon_launcher::update_handoff::take_failure()
+                 .map_or(SelfUpdate::Idle, |e| SelfUpdate::Stuck(Some(e))),
+             self_update_hidden: false,
++            patcher_compatibility: None,
+             update_install: None,
+             instance_install: None,
+             install_next: None,
+@@ -782,6 +762,7 @@ impl Launcher {
+         this.load_profile_heads();
+         this.load_auth_statuses(true);
+         this.fetch_startup_releases();
++        this.check_patcher_compatibility();
+         this.mods_auto_update();
+         this.fetch_links();
+         this.watch_shop(cx);
+@@ -899,6 +880,7 @@ impl Launcher {
+     }
+ 
+     fn check_updates(&mut self) {
++        self.check_patcher_compatibility();
+         self.checked = Some(Instant::now());
+         let tx = self.tx.clone();
+         std::thread::spawn(move || {
+@@ -906,6 +888,45 @@ impl Launcher {
+         });
+     }
+ 
++    fn check_patcher_compatibility(&self) {
++        let tx = self.tx.clone();
++        std::thread::spawn(move || {
++            let _ = tx.send(Msg::PatcherCompatibility(horizon_launcher::smart_updates::Compatibility::check()));
++        });
++    }
++
++    /// The official downloads are unpatched; never replace the running executable silently.
++    fn patcher_update_card(&self) -> Option<Div> {
++        let state = self.patcher_compatibility.as_ref()?;
++        let ru = i18n::current() == i18n::Language::Russian;
++        let text = |en: &'static str, ru_text: &'static str| if ru { ru_text } else { en };
++        let t = self.theme;
++        let mut card = div().flex().flex_col().gap(px(5.)).p(px(8.))
++            .child(div().text_size(px(12.)).child(format!("{}: {}", text("Tested", "Проверена"), state.supported.as_deref().unwrap_or("?"))))
++            .child(div().text_size(px(12.)).child(format!("{}: {}", text("Latest", "Последняя"), state.latest.as_deref().unwrap_or("?"))));
++        if state.supported.is_none() || state.latest.is_none() {
++            card = card.child(div().text_size(px(12.)).child(text("Could not check all versions. Try checking again in Settings.", "Не удалось проверить все версии. Повтори проверку в настройках.")));
++        } else if state.latest_unverified() {
++            card = card.child(div().text_size(px(12.)).child(text("Latest is not yet verified by the patcher. Official downloads are unpatched.", "Последняя версия ещё не проверена патчером. Официальные загрузки без патчей.")));
++        } else {
++            card = card.child(div().text_size(px(12.)).child(text("Official downloads are unpatched.", "Официальные загрузки без патчей.")));
++        }
++        if state.update_available(backend::VERSION) {
++            card = card.child(div().text_size(px(12.)).child(text("Download the tested launcher and patcher; close this launcher and apply the patch.", "Скачай проверенный лаунчер и патчер, закрой лаунчер и примени патч.")))
++                .child(button("patcher-update", text("Update via patcher", "Обновить через патчер"), Kind::Primary, &t)
++                    .on_click(|_, _, cx| cx.open_url("https://github.com/NikitaRTN/Horizon-Patcher/releases/latest/download/HorizonPatcher.exe")));
++        }
++        if let Some(url) = state.supported.as_deref().and_then(horizon_launcher::smart_updates::Compatibility::zip) {
++            card = card.child(button("patcher-tested-download", text("Download tested", "Скачать проверенную"), Kind::Secondary, &t)
++                .on_click(move |_, _, cx| cx.open_url(&url)));
++        }
++        if let Some(url) = state.latest.as_deref().and_then(horizon_launcher::smart_updates::Compatibility::zip) {
++            card = card.child(button("patcher-latest-download", text("Download latest", "Скачать последнюю"), Kind::Secondary, &t)
++                .on_click(move |_, _, cx| cx.open_url(&url)));
++        }
++        Some(card)
++    }
++
+     /// Recovery text shared by both sidebar styles and Settings.
+     fn launcher_update_help(&self, error: Option<&str>) -> String {
+         if let Some(error) = error {
+@@ -1379,6 +1400,7 @@ impl Launcher {
+                     }
+                 }
+                 Msg::Updates(Err(e)) => self.update_error = Some(e),
++                Msg::PatcherCompatibility(result) => self.patcher_compatibility = Some(result),
+                 Msg::NativeProgress(step) => self.native_step = Some(step),
+                 Msg::Native(result) => {
+                     // The last step of a build that worked says how it went.
+@@ -2929,7 +2951,6 @@ impl Launcher {
              },
          ));
          let items = self.instance_items(heading, cx);
@@ -458,7 +561,7 @@ index 1ae8144..2001e9b 100644
          let list = div()
              .flex()
              .flex_col()
-@@ -2847,8 +2824,6 @@ impl Launcher {
+@@ -2945,8 +2966,6 @@ impl Launcher {
          if !servers.is_empty() {
              list = list.child(heading(tr("SERVERS").into()));
          }
@@ -467,7 +570,7 @@ index 1ae8144..2001e9b 100644
          for e in servers {
              let up = self.servers.is_up(&e.dir);
              let open = self.page == Page::Servers && self.servers.open.as_ref() == Some(&e.dir);
-@@ -2979,34 +2954,6 @@ impl Launcher {
+@@ -3093,34 +3112,7 @@ impl Launcher {
              }
              _ => {}
          }
@@ -499,10 +602,11 @@ index 1ae8144..2001e9b 100644
 -            }
 -            foot = foot.child(side);
 -        }
++        if let Some(card) = self.patcher_update_card() { foot = foot.child(card); }
          if !self.links.sponsor.is_empty() {
              foot = foot.child(link(
                  "sponsor",
-@@ -5608,6 +5555,19 @@ fn menus() -> Vec<Menu> {
+@@ -5730,6 +5722,19 @@ fn menus() -> Vec<Menu> {
  }
  
  fn main() {
@@ -837,10 +941,10 @@ index 59e6b45..f2a2cf8 100644
 +    let _ = fs::remove_dir_all(root);
 +}
 diff --git a/launcher/src/servers_page.rs b/launcher/src/servers_page.rs
-index dbc2761..a556068 100644
+index 20d2033..d2ba0ff 100644
 --- a/launcher/src/servers_page.rs
 +++ b/launcher/src/servers_page.rs
-@@ -1365,34 +1365,12 @@ impl Launcher {
+@@ -1369,34 +1369,12 @@ impl Launcher {
          {
              page = page.child(self.problem_notice(p, cx));
          }
@@ -876,7 +980,7 @@ index dbc2761..a556068 100644
          }
          let mut list = div().flex().flex_col().border_t_1().border_color(t.rule);
          for (i, e) in self.servers.list.clone().into_iter().enumerate() {
-@@ -1438,7 +1416,7 @@ impl Launcher {
+@@ -1442,7 +1420,7 @@ impl Launcher {
                  &t,
              ));
          }
@@ -885,6 +989,94 @@ index dbc2761..a556068 100644
      }
  
      fn add_server_folder(&mut self, cx: &mut Context<Self>) {
+diff --git a/launcher/src/smart_updates.rs b/launcher/src/smart_updates.rs
+new file mode 100644
+index 0000000..109bf1e
+--- /dev/null
++++ b/launcher/src/smart_updates.rs
+@@ -0,0 +1,82 @@
++//! Patcher compatibility is based on published, CI-tested patcher releases, not guesses.
++use serde_json::Value;
++
++#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
++struct Version(u64, u64, u64);
++fn version(s: &str) -> Option<Version> {
++    let mut parts = s.split('.');
++    let parse = |p: &str| {
++        if p.is_empty() || !p.bytes().all(|b| b.is_ascii_digit()) { return None; }
++        p.parse().ok()
++    };
++    let v = Version(parse(parts.next()?)?, parse(parts.next()?)?, parse(parts.next()?)?);
++    if parts.next().is_some() { None } else { Some(v) }
++}
++fn has_asset(release: &Value, name: &str) -> bool {
++    release["assets"].as_array().is_some_and(|a| a.iter().any(|a| a["name"].as_str() == Some(name)))
++}
++fn stable(release: &Value) -> bool {
++    release["draft"].as_bool() == Some(false) && release["prerelease"].as_bool() == Some(false)
++}
++fn supported_release(release: &Value) -> Option<String> {
++    if !stable(release) || !has_asset(release, "HorizonPatcher.exe") { return None; }
++    let tag = release["tag_name"].as_str()?.strip_prefix("patcher-")?;
++    let (v, commit) = tag.split_once('-')?;
++    if commit.len() < 7 || !commit.bytes().all(|b| b.is_ascii_hexdigit()) { return None; }
++    version(v)?;
++    Some(v.to_owned())
++}
++fn official_release(list: &Value) -> Option<String> {
++    list.as_array()?.iter().filter(|r| stable(r) && has_asset(r, "horizon-launcher-windows-x64.zip"))
++        .filter_map(|r| { let v = r["tag_name"].as_str()?.strip_prefix("launcher@")?; Some((version(v)?, v.to_owned())) })
++        .max_by(|a,b| a.0.cmp(&b.0)).map(|(_,v)| v)
++}
++#[derive(Clone, Debug, Default)]
++pub struct Compatibility {
++    pub supported: Option<String>,
++    pub latest: Option<String>,
++}
++impl Compatibility {
++    pub fn check() -> Self {
++        // Independent failures leave the corresponding state unknown, not unsupported.
++        let supported = crate::github::json("https://api.github.com/repos/NikitaRTN/Horizon-Patcher/releases/latest")
++            .ok().and_then(|v| supported_release(&v));
++        let latest = crate::github::json("https://api.github.com/repos/horizon-rust/horizon/releases?per_page=100")
++            .ok().and_then(|v| official_release(&v));
++        Self { supported, latest }
++    }
++    pub fn update_available(&self, current: &str) -> bool {
++        self.supported.as_deref().and_then(version).zip(version(current)).is_some_and(|(a,b)| a > b)
++    }
++    pub fn latest_unverified(&self) -> bool {
++        self.latest.as_deref().and_then(version).zip(self.supported.as_deref().and_then(version)).is_some_and(|(a,b)| a > b)
++    }
++    pub fn zip(v: &str) -> Option<String> {
++        version(v)?;
++        Some(format!("https://github.com/horizon-rust/horizon/releases/download/launcher%40{v}/horizon-launcher-windows-x64.zip"))
++    }
++}
++#[cfg(test)]
++mod tests {
++    use super::*;
++    use serde_json::json;
++    #[test]
++    fn patcher_compatibility_release_parsing() {
++        let r = json!({"tag_name":"patcher-0.2.44-3796e84a","draft":false,"prerelease":false,"assets":[{"name":"HorizonPatcher.exe"}]});
++        assert_eq!(supported_release(&r).as_deref(), Some("0.2.44"));
++        let mut bad=r.clone(); bad["draft"]=json!(true); assert_eq!(supported_release(&bad), None);
++        let mut bad=r.clone(); bad["assets"]=json!([]); assert_eq!(supported_release(&bad), None);
++        let mut bad=r; bad["tag_name"]=json!("patcher-0.2.44-evil/path"); assert_eq!(supported_release(&bad), None);
++    }
++    #[test]
++    fn patcher_compatibility_never_guesses() {
++        let a=Compatibility { supported:Some("0.2.9".into()),latest:Some("0.2.10".into()) };
++        assert!(a.latest_unverified()); assert!(a.update_available("0.2.8"));
++        assert!(!Compatibility { supported:None, latest:a.latest.clone() }.latest_unverified());
++        assert!(!Compatibility { supported:Some("0.2.10".into()), latest:Some("0.2.10".into()) }.latest_unverified());
++        assert!(!a.update_available("not-a-version"));
++        assert!(Compatibility::zip("1/../../x").is_none());
++        let list=json!([{ "tag_name":"launcher@0.2.9", "draft":false,"prerelease":false,"assets":[{"name":"horizon-launcher-windows-x64.zip"}] }, { "tag_name":"launcher@0.2.10", "draft":false,"prerelease":false,"assets":[{"name":"horizon-launcher-windows-x64.zip"}] }, {"tag_name":"launcher@9.0.0", "draft":false,"prerelease":true,"assets":[{"name":"horizon-launcher-windows-x64.zip"}]}]);
++        assert_eq!(official_release(&list).as_deref(),Some("0.2.10"));
++    }
++}
 diff --git a/launcher/src/sources.rs b/launcher/src/sources.rs
 index 7d2c9a6..0c6bb1a 100644
 --- a/launcher/src/sources.rs
