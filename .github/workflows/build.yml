@@ -24,6 +24,7 @@ jobs:
       GH_TOKEN: ${{ github.token }}
       RUSTFLAGS: '-C target-feature=+crt-static'
       HORIZON_MSA_CLIENT_ID: ${{ vars.HORIZON_MSA_CLIENT_ID }}
+      HORIZON_TELEMETRY_URL: 'off'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -78,6 +79,14 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Upstream changed: patch requires review' }
           git -C upstream apply $patch
           if ($LASTEXITCODE -ne 0) { throw 'Patch application failed' }
+      - name: Validate and update translations for the privacy patch
+        if: steps.prepare.outputs.publish == 'true'
+        shell: pwsh
+        run: |
+          python -m unittest discover -s tests -p test_prune_translations.py -v
+          if ($LASTEXITCODE -ne 0) { throw 'Translation script tests failed' }
+          python tests/prune_translations.py upstream/launcher/lang
+          if ($LASTEXITCODE -ne 0) { throw 'Could not update translations safely' }
       - name: Check partner banners are absent
         if: steps.prepare.outputs.publish == 'true'
         shell: pwsh
@@ -97,7 +106,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: cached-launcher/horizon-launcher.exe
-          key: launcher-v1-${{ env.UPSTREAM_COMMIT }}-${{ env.OFFICIAL_SHA256 }}-${{ hashFiles('patches/privacy.patch') }}-${{ steps.launcher-key.outputs.hash }}
+          key: launcher-v2-${{ env.UPSTREAM_COMMIT }}-${{ env.OFFICIAL_SHA256 }}-${{ hashFiles('patches/privacy.patch', 'tests/prune_translations.py') }}-${{ steps.launcher-key.outputs.hash }}
       # Cache compiled third-party/path dependencies independently of the exact
       # launcher payload. A changed patch still rebuilds and runs all tests.
       # PRs may read trusted main caches but never populate main's cache.
@@ -113,22 +122,25 @@ jobs:
         working-directory: upstream/launcher
         shell: pwsh
         run: |
-          # Cargo succeeds when a filter matches zero tests. Verify every required test exists first.
-          $tests = @(
+          # Run every launcher test target once, as upstream does. Separate Cargo
+          # invocations can recompile unchanged crates repeatedly on Windows.
+          # Check the output too: Cargo succeeds if a required test disappears.
+          $requiredTests = @(
             'elyprism_windows_instances_are_discovered',
             'the_developer_option_plays_offline_names_without_an_owner',
             'offline_player_has_stable_vanilla_identity',
             'offline_import_copies_only_verified_existing_files',
             'offline_java_uses_legacy_user_type',
-            'mojang_downloads_only_for_an_owner'
+            'mojang_downloads_only_for_an_owner',
+            'the_cli_requires_a_prepared_version_for_offline_play',
+            'the_mcp_server_requires_a_prepared_version_for_offline_play'
           )
-          $listed = cargo test --release --locked --lib -- --list
-          if ($LASTEXITCODE -ne 0) { throw 'Failed to enumerate launcher tests' }
-          foreach ($test in $tests) {
-            $matches = @($listed | Where-Object { $_ -match (':{2}' + [regex]::Escape($test) + ': test$') })
-            if ($matches.Count -ne 1) { throw "Required test $test is missing or ambiguous" }
-            cargo test --release --locked --lib $test
-            if ($LASTEXITCODE -ne 0) { throw "Required test $test failed" }
+          cargo test --release --locked --no-fail-fast -- --color never | Tee-Object -Variable testOutput
+          if ($LASTEXITCODE -ne 0) { throw 'Launcher test suite failed' }
+          foreach ($test in $requiredTests) {
+            $pattern = '^test\s+(?:[^\s]*::)?' + [regex]::Escape($test) + '\s+\.\.\.\s+ok\s*$'
+            $found = @($testOutput | Where-Object { $_ -match $pattern })
+            if ($found.Count -lt 1) { throw "Required test $test did not run successfully" }
           }
           cargo build --release --locked --bin horizon-launcher
           if ($LASTEXITCODE -ne 0) { throw 'Launcher build failed' }
