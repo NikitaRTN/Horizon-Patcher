@@ -6,7 +6,7 @@ on:
     branches: [main]
   workflow_dispatch:
   schedule:
-    - cron: '17 */6 * * *'
+    - cron: '7,37 * * * *'
 concurrency:
   # Keep main/release runs serialized, but never queue unrelated PRs behind them.
   group: ${{ github.event_name == 'pull_request' && format('horizon-patcher-pr-{0}', github.event.pull_request.number) || 'horizon-patcher-release' }}
@@ -74,11 +74,11 @@ jobs:
         if: steps.prepare.outputs.publish == 'true'
         shell: pwsh
         run: |
-          $patch = (Resolve-Path patches/privacy.patch).Path
-          git -C upstream apply --check $patch
-          if ($LASTEXITCODE -ne 0) { throw 'Upstream changed: patch requires review' }
-          git -C upstream apply $patch
-          if ($LASTEXITCODE -ne 0) { throw 'Patch application failed' }
+          python -m unittest discover -s tests -p test_apply_patch.py -v
+          if ($LASTEXITCODE -ne 0) { throw 'Patch adaptation tests failed' }
+          $base = (Get-Content patches/privacy.base -Raw).Trim()
+          python tests/apply_patch.py upstream patches/privacy.patch $base
+          if ($LASTEXITCODE -ne 0) { throw 'Automatic patch adaptation failed: manual review required' }
       - name: Validate and update translations for the privacy patch
         if: steps.prepare.outputs.publish == 'true'
         shell: pwsh
@@ -106,7 +106,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: cached-launcher/horizon-launcher.exe
-          key: launcher-v2-${{ env.UPSTREAM_COMMIT }}-${{ env.OFFICIAL_SHA256 }}-${{ hashFiles('patches/privacy.patch', 'tests/prune_translations.py') }}-${{ steps.launcher-key.outputs.hash }}
+          key: launcher-v2-${{ env.UPSTREAM_COMMIT }}-${{ env.OFFICIAL_SHA256 }}-${{ hashFiles('patches/privacy.patch', 'patches/privacy.base', 'tests/apply_patch.py', 'tests/test_apply_patch.py', 'tests/prune_translations.py') }}-${{ steps.launcher-key.outputs.hash }}
       # Cache compiled third-party/path dependencies independently of the exact
       # launcher payload. A changed patch still rebuilds and runs all tests.
       # PRs may read trusted main caches but never populate main's cache.
