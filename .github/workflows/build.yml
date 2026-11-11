@@ -226,7 +226,7 @@ jobs:
           if ($b[0] -ne 0x4d -or $b[1] -ne 0x5a -or [BitConverter]::ToUInt32($b, $offset) -ne 0x4550 -or [BitConverter]::ToUInt16($b, $offset + 24 + 68) -ne 2) { throw 'Patcher is not a Windows GUI-subsystem executable' }
           ./tests/scheduler-migration.ps1 -Patcher $exe -Official (Resolve-Path official/horizon-launcher.exe).Path
           ./tests/startup-update.ps1
-          ./tests/gui-compatibility.ps1
+          ./tests/gui-compatibility.ps1 -Patcher $exe
       - name: Save tested launcher cache
         if: steps.prepare.outputs.publish == 'true' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && steps.launcher-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
