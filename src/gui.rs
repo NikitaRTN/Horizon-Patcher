@@ -72,7 +72,7 @@ pub fn run(smoke: bool) -> Result<(), String> {
     let webview = WebViewBuilder::new()
         .with_html(HTML)
         .with_navigation_handler(move |url| { if smoke { diag(&format!("navigation {url}")); } url == "about:blank" })
-        .with_on_page_load_handler(move |event, url| { if smoke { diag(&format!("load {event:?} {url}")); } })
+        .with_on_page_load_handler(move |_event, url| { if smoke { diag(&format!("page load {url}")); } })
         .with_ipc_handler(move |request| {
             if smoke { diag(&format!("ipc {}", request.body())); }
             let _ = ipc_proxy.send_event(Message::Ipc(request.body().clone()));
