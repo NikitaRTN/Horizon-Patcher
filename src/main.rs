@@ -90,46 +90,15 @@ fn hidden_command(program: impl AsRef<std::ffi::OsStr>) -> Command {
     }
     command
 }
+#[cfg(windows)]
+mod gui;
+#[cfg(windows)]
 fn run_gui() -> Result<(), String> {
-    let script = include_str!("gui.ps1");
-    if script.encode_utf16().count() > 30000 {
-        return Err("GUI script exceeds Windows environment limit".into());
-    }
-    let status = hidden_command("powershell.exe")
-        .env_remove("PSModulePath")
-        .args([
-            "-NoLogo",
-            "-NoProfile",
-            "-NonInteractive",
-            "-STA",
-            "-WindowStyle",
-            "Hidden",
-            "-Command",
-            "& ([ScriptBlock]::Create($env:HORIZON_GUI_SCRIPT))",
-        ])
-        .env("HORIZON_GUI_SCRIPT", script)
-        .env(
-            "HORIZON_PATCHER_EXE",
-            env::current_exe().map_err(|e| e.to_string())?,
-        )
-        .env("HORIZON_PATCHER_TAG", BUILD_TAG)
-        .env(
-            "HORIZON_PATCHER_VERSION",
-            compatible_version(BUILD_TAG).unwrap_or(""),
-        )
-        .env(
-            "HORIZON_SETUP_URL",
-            compatible_version(BUILD_TAG)
-                .map(official_setup_url)
-                .unwrap_or_default(),
-        )
-        .status()
-        .map_err(|e| e.to_string())?;
-    if status.success() {
-        Ok(())
-    } else {
-        Err(format!("GUI could not start (exit {status})"))
-    }
+    gui::run(false)
+}
+#[cfg(not(windows))]
+fn run_gui() -> Result<(), String> {
+    Err("GUI requires Windows".into())
 }
 #[cfg(windows)]
 fn show_startup_error(message: &str) {
@@ -593,6 +562,8 @@ fn run() -> Result<(), String> {
                 run_gui()
             }
         }
+        #[cfg(windows)]
+        Some("--gui-smoke-test") => gui::run(true),
         Some("--updated") => {
             remove_all_legacy_tasks()?;
             run_gui()
@@ -707,8 +678,11 @@ mod tests {
         }
     }
     #[test]
-    fn gui_script_fits_windows_environment() {
-        assert!(include_str!("gui.ps1").encode_utf16().count() <= 30000);
+    fn embedded_ui_fits_webview_limit() {
+        let html = include_str!("gui.html");
+        assert!(html.len() < 2 * 1024 * 1024);
+        assert!(html.contains("Content-Security-Policy"));
+        assert!(!html.contains("cdn.tailwindcss.com"));
     }
     #[test]
     fn computes_sha256() {
