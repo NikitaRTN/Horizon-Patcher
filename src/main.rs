@@ -17,6 +17,27 @@ const BUILD_TAG: &str = env!("PATCHER_BUILD_TAG");
 const API: &str = "https://api.github.com/repos/NikitaRTN/Horizon-Patcher/releases/latest";
 const ASSET_PREFIX: &str = "https://github.com/NikitaRTN/Horizon-Patcher/releases/download/";
 
+// The release tag binds the supported launcher version to this payload.
+fn compatible_version(tag: &str) -> Option<&str> {
+    let rest = tag.strip_prefix("patcher-")?;
+    let (version, revision) = rest.split_once('-')?;
+    if revision.len() != 8 || !revision.bytes().all(|b| b.is_ascii_hexdigit()) {
+        return None;
+    }
+    let parts: Vec<&str> = version.split('.').collect();
+    if parts.len() != 3
+        || parts
+            .iter()
+            .any(|p| p.is_empty() || !p.bytes().all(|b| b.is_ascii_digit()))
+    {
+        return None;
+    }
+    Some(version)
+}
+fn official_setup_url(version: &str) -> String {
+    format!("https://github.com/horizon-rust/horizon/releases/download/launcher%40{version}/horizon-launcher-setup.exe")
+}
+
 fn hash_bytes(data: &[u8]) -> String {
     format!("{:x}", Sha256::digest(data))
 }
@@ -92,6 +113,16 @@ fn run_gui() -> Result<(), String> {
             env::current_exe().map_err(|e| e.to_string())?,
         )
         .env("HORIZON_PATCHER_TAG", BUILD_TAG)
+        .env(
+            "HORIZON_PATCHER_VERSION",
+            compatible_version(BUILD_TAG).unwrap_or(""),
+        )
+        .env(
+            "HORIZON_SETUP_URL",
+            compatible_version(BUILD_TAG)
+                .map(official_setup_url)
+                .unwrap_or_default(),
+        )
         .status()
         .map_err(|e| e.to_string())?;
     if status.success() {
@@ -657,6 +688,23 @@ mod tests {
         let _ = child.wait();
         let _ = fs::remove_dir_all(dir);
         assert!(result.is_err(), "a running launcher must not be replaced");
+    }
+    #[test]
+    fn compatible_release_tag_and_official_setup_url() {
+        let version = compatible_version("patcher-0.2.59-7cf218cd").unwrap();
+        assert_eq!(version, "0.2.59");
+        assert_eq!(official_setup_url(version), "https://github.com/horizon-rust/horizon/releases/download/launcher%400.2.59/horizon-launcher-setup.exe");
+        for tag in [
+            "",
+            "patcher-0.2.59",
+            "patcher-0.2-12345678",
+            "patcher-0.2.59-xyzxyzxy",
+            "patcher-0.2.59/evil-12345678",
+            "patcher-0.2.59-12345678-extra",
+            "patcher-0..59-12345678",
+        ] {
+            assert_eq!(compatible_version(tag), None, "{tag}");
+        }
     }
     #[test]
     fn gui_script_fits_windows_environment() {
