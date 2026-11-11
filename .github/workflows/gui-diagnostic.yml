@@ -1,0 +1,25 @@
+name: Temporary GUI diagnostic
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  gui:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build diagnostic executable with dummy payload
+        shell: pwsh
+        run: |
+          [IO.File]::WriteAllText("$env:RUNNER_TEMP\dummy.gz", 'dummy')
+          "PATCH_PAYLOAD=$env:RUNNER_TEMP\dummy.gz" >> $env:GITHUB_ENV
+          "PATCH_PAYLOAD_SHA256=$('0' * 64)" >> $env:GITHUB_ENV
+          "OFFICIAL_SHA256=$('0' * 64)" >> $env:GITHUB_ENV
+          "PATCHER_BUILD_TAG=patcher-0.2.60-diagnostic" >> $env:GITHUB_ENV
+      - run: cargo build --release --locked
+      - uses: actions/upload-artifact@v4
+        with:
+          name: diagnostic-gui-only
+          path: target/release/horizon-patcher.exe
+          retention-days: 1
