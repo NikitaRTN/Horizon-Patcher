@@ -154,6 +154,7 @@ jobs:
             'elyprism_windows_instances_are_discovered',
             'the_developer_option_plays_offline_names_without_an_owner',
             'offline_player_has_stable_vanilla_identity',
+            'saving_keeps_offline_selection_and_skins_during_late_renewal',
             'offline_import_copies_only_verified_existing_files',
             'offline_java_uses_legacy_user_type',
             'mojang_downloads_only_for_an_owner',

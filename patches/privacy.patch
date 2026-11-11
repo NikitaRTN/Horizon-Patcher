@@ -1,5 +1,5 @@
 diff --git a/docs/hosting.md b/docs/hosting.md
-index d86c020..f6c7d4e 100644
+index 990add6..a1a6479 100644
 --- a/docs/hosting.md
 +++ b/docs/hosting.md
 @@ -20,7 +20,7 @@ plan are in [server.md](server.md).
@@ -128,10 +128,10 @@ index 888ec66..952956b 100644
  
  `HORIZON_API_DISCOVERY` overrides the discovery URL, the counterpart of authlib's
 diff --git a/docs/play-with-friends.md b/docs/play-with-friends.md
-index f79f37d..a0310f7 100644
+index 43a946c..297897a 100644
 --- a/docs/play-with-friends.md
 +++ b/docs/play-with-friends.md
-@@ -115,8 +115,8 @@ run at once there, and each must finish within 10 seconds however slowly its byt
+@@ -116,8 +116,8 @@ run at once there, and each must finish within 10 seconds however slowly its byt
  
  Like LAN, and like vanilla's `IntegratedServer`: a host signed in with a Microsoft account runs the world
  in online mode, so each guest signs in through Mojang's session servers and arrives with their own
@@ -15981,7 +15981,7 @@ index 5ec9e62..7ab7e4f 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Ngena ngemvume nge-akhawunti ephethe Minecraft: Java Edition. Igama lakho nesikhumba kufika kumaseva aku-inthanethi, njengakwezinye iziqalisi.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Ikhasi lika-Microsoft liyavuleka esipheqululini sakho. Horizon akalokothi ayibone iphasiwedi yakho.",
 diff --git a/launcher/src/account.rs b/launcher/src/account.rs
-index 5c62885..0139402 100644
+index 3c13c32..2f4c923 100644
 --- a/launcher/src/account.rs
 +++ b/launcher/src/account.rs
 @@ -7,7 +7,7 @@
@@ -16059,11 +16059,10 @@ index 5c62885..0139402 100644
  impl Accounts {
      pub(crate) fn path() -> PathBuf {
          crate::backend::data_dir().join("accounts.json")
-@@ -1732,18 +1757,7 @@ impl Accounts {
-             std::fs::create_dir_all(dir).map_err(|e| e.to_string())?;
+@@ -1740,16 +1765,6 @@ impl Accounts {
+             let _ = std::fs::remove_file(&tmp);
+             return Err(e.to_string());
          }
-         let text = serde_json::to_string_pretty(self).map_err(|e| e.to_string())?;
--        std::fs::write(path, text + "\n").map_err(|e| e.to_string())?;
 -        // An older launcher's offline names: their skins and capes go too, missing files are fine.
 -        if let Some(skins) = path.parent().map(|dir| dir.join("skins")) {
 -            for name in &self.old_offline {
@@ -16074,12 +16073,19 @@ index 5c62885..0139402 100644
 -            }
 -            let _ = std::fs::remove_dir(&skins);
 -        }
--        Ok(())
-+        std::fs::write(path, text + "\n").map_err(|e| e.to_string())
+         Ok(())
      }
-     pub fn selected(&self) -> Option<&Account> {
-         let uuid = self.selected.as_ref()?;
-@@ -1785,7 +1799,7 @@ impl Accounts {
+     /// Saves what a launch renewed (names, skins) into `accounts.json` as it is now, under the
+@@ -1768,7 +1783,7 @@ impl Accounts {
+         for account in &self.accounts {
+             saved.update(account.clone());
+         }
+-        if saved.selected().is_none() {
++        if saved.selected().is_none() && saved.offline_selected.is_none() {
+             saved.selected = self
+                 .selected
+                 .clone()
+@@ -1816,7 +1831,7 @@ impl Accounts {
          Ok(())
      }
      /// Whether an account here owned the game at its last check (the keychain's answer, no
@@ -16088,7 +16094,7 @@ index 5c62885..0139402 100644
      pub fn has_owner(&self, store: &dyn SecretStore) -> bool {
          // The selected account first: it owning the game ends the search after one account's
          // item — every account's item read can ask for the keychain (macOS, #4912).
-@@ -1795,15 +1809,112 @@ impl Accounts {
+@@ -1826,15 +1841,112 @@ impl Accounts {
              .any(|a| secrets_in(store, &a.uuid).is_some_and(|s| s.owns))
      }
  
@@ -16139,11 +16145,10 @@ index 5c62885..0139402 100644
 +                self.selected = None;
 +                self.offline_selected = None;
 +            }
-         }
--        self.selected = Some(uuid.to_string());
-         Ok(())
-     }
- 
++        }
++        Ok(())
++    }
++
 +    /// Keeps an offline name (once, in any case); returns it as kept.
 +    fn add_offline(&mut self, name: &str) -> Result<String, String> {
 +        let name = name.trim();
@@ -16175,10 +16180,11 @@ index 5c62885..0139402 100644
 +            .is_some_and(|n| n.eq_ignore_ascii_case(name))
 +        {
 +            self.offline_selected = None;
-+        }
-+        Ok(())
-+    }
-+
+         }
+-        self.selected = Some(uuid.to_string());
+         Ok(())
+     }
+ 
 +    /// An offline name's look (the default: no skin of its own).
 +    pub fn look(&self, name: &str) -> crate::skins::Look {
 +        self.looks
@@ -16206,7 +16212,7 @@ index 5c62885..0139402 100644
      /// A renewed profile (its name or skin changed) in place of the old one; who plays stays.
      fn update(&mut self, account: Account) {
          if let Some(a) = self.accounts.iter_mut().find(|a| a.uuid == account.uuid) {
-@@ -1811,7 +1922,8 @@ impl Accounts {
+@@ -1842,7 +1954,8 @@ impl Accounts {
          }
      }
  
@@ -16216,7 +16222,7 @@ index 5c62885..0139402 100644
      pub fn remove(&mut self, store: &dyn SecretStore, uuid: &str) -> Result<(), String> {
          let _operation = session::lock(store)?;
          store.delete(uuid)?;
-@@ -1826,9 +1938,8 @@ impl Accounts {
+@@ -1857,9 +1970,8 @@ impl Accounts {
  /// No account in the launcher owns Minecraft: Java Edition: the game must not start.
  #[derive(Debug, Default, PartialEq)]
  pub struct NoOwner {
@@ -16228,7 +16234,7 @@ index 5c62885..0139402 100644
      pub keyring: Option<String>,
  }
  impl std::fmt::Display for NoOwner {
-@@ -1858,8 +1969,8 @@ impl NoOwner {
+@@ -1889,8 +2001,8 @@ impl NoOwner {
  /// The owner gate's pass for one launch.
  #[derive(Debug, Default)]
  pub struct Launch {
@@ -16239,7 +16245,7 @@ index 5c62885..0139402 100644
      pub session: Option<(Account, Secrets)>,
      /// Why the selected account plays without its session this time.
      pub offline: Option<String>,
-@@ -1976,30 +2087,20 @@ pub fn launch(
+@@ -2007,30 +2119,20 @@ pub fn launch(
      }
  }
  
@@ -16278,7 +16284,7 @@ index 5c62885..0139402 100644
      }
  }
  
-@@ -2236,14 +2337,19 @@ pub struct GameSession {
+@@ -2267,14 +2369,19 @@ pub struct GameSession {
  }
  
  /// The owner gate for the game about to start, then the selected account's session in a file
@@ -16300,7 +16306,7 @@ index 5c62885..0139402 100644
      )?;
      let env = split_sessions(
          game_home,
-@@ -2260,7 +2366,7 @@ pub fn session_for_game(game_home: &Path) -> Result<GameSession, NoOwner> {
+@@ -2291,7 +2398,7 @@ pub fn session_for_game(game_home: &Path) -> Result<GameSession, NoOwner> {
  /// plays changes for this launch only, so several games can play as several accounts at once
  /// (#4952). What the services renewed (tokens, names, skins) is still kept; which account
  /// `account select` picked is not touched.
@@ -16309,7 +16315,7 @@ index 5c62885..0139402 100644
      let mut accounts = Accounts::load();
      let pass = launch_as(
          &Endpoints::live(),
-@@ -2290,13 +2396,21 @@ fn launch_as(
+@@ -2321,13 +2428,21 @@ fn launch_as(
      client_id: Option<&str>,
      store: &dyn SecretStore,
      accounts: &mut Accounts,
@@ -16336,7 +16342,7 @@ index 5c62885..0139402 100644
      pass
  }
  
-@@ -2322,7 +2436,7 @@ fn split_sessions(
+@@ -2353,7 +2468,7 @@ fn split_sessions(
      playing: Option<&str>,
  ) -> Vec<(&'static str, String)> {
      if splitscreen_on(game_home) {
@@ -16346,7 +16352,7 @@ index 5c62885..0139402 100644
          let env = account_sessions(
              &Endpoints::live(),
 diff --git a/launcher/src/account/tests.rs b/launcher/src/account/tests.rs
-index eb27706..96e9d34 100644
+index 2429453..0ab0233 100644
 --- a/launcher/src/account/tests.rs
 +++ b/launcher/src/account/tests.rs
 @@ -680,7 +680,7 @@ fn any_owner_opens_the_gate_and_the_one_who_plays_brings_the_session() {
@@ -16636,8 +16642,38 @@ index eb27706..96e9d34 100644
  }
  
  #[test]
+@@ -2516,3 +2574,29 @@ fn a_launch_saving_late_keeps_sign_ins_and_outs_made_meanwhile() {
+     assert_eq!(names, [std::ffi::OsString::from("accounts.json")]);
+     let _ = std::fs::remove_dir_all(&dir);
+ }
++
++#[test]
++fn saving_keeps_offline_selection_and_skins_during_late_renewal() {
++    let store = MemoryStore::default();
++    let dir = std::env::temp_dir().join(format!("horizon-offline-safe-save-{}", std::process::id()));
++    let _ = std::fs::remove_dir_all(&dir);
++    let skins = dir.join("skins");
++    std::fs::create_dir_all(&skins).unwrap();
++    let (skin, cape) = crate::skins::files(&skins, "builder_1");
++    std::fs::write(&skin, b"skin").unwrap();
++    std::fs::write(&cape, b"cape").unwrap();
++    let file = dir.join("accounts.json");
++    let before = signed_in(&store, &secrets("mc-token", true));
++    before.save_to(&file).unwrap();
++    let renewed = Accounts::load_from(&file);
++    let mut now = Accounts::load_from(&file);
++    now.play_as(&store, Player::Offline("Builder_1".into())).unwrap();
++    now.save_to(&file).unwrap();
++    renewed.save_renewed_to(&store, &file).unwrap();
++    let saved = Accounts::load_from(&file);
++    assert_eq!(saved.player(), Player::Offline("Builder_1".into()));
++    assert_eq!(std::fs::read(&skin).unwrap(), b"skin");
++    assert_eq!(std::fs::read(&cape).unwrap(), b"cape");
++    assert!(!file.with_extension(format!("json.{}.tmp", std::process::id())).exists());
++    let _ = std::fs::remove_dir_all(&dir);
++}
 diff --git a/launcher/src/backend.rs b/launcher/src/backend.rs
-index 56bb785..5eb083b 100644
+index fc81f2f..1af41e1 100644
 --- a/launcher/src/backend.rs
 +++ b/launcher/src/backend.rs
 @@ -2114,7 +2114,8 @@ fn download_for_owner(
