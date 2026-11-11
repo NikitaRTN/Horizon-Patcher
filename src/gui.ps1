@@ -34,6 +34,22 @@ Mark $nav 9 8 40; [void](Label $nav 'Патчер Horizon' 58 9 128 22 10 $C.ink
 [void](Label $side '02' 22 306 28 23 9 '#8e78ed' $true); [void](Label $side 'Телеметрия Horizon' 54 306 145 24 9 $C.ink)
 [void](Label $side '03' 22 342 28 23 9 '#8e78ed' $true); [void](Label $side 'Проверка обновлений' 54 342 155 24 9 $C.ink)
 [void](Label $side 'Неофициальный проект' 22 564 180 22 9 $C.muted); $version=Label $side $env:HORIZON_PATCHER_TAG 22 587 185 32 8 $C.muted
+# The URL is tied to this build's version, not the latest upstream release.
+$compatibleVersion=$env:HORIZON_PATCHER_VERSION
+$expectedSetup='https://github.com/horizon-rust/horizon/releases/download/launcher%40'+$compatibleVersion+'/horizon-launcher-setup.exe'
+$hasCompatibleSetup=($compatibleVersion -cmatch '^[0-9]+\.[0-9]+\.[0-9]+$' -and $env:HORIZON_SETUP_URL -ceq $expectedSetup)
+[void](Label $side 'СОВМЕСТИМАЯ ВЕРСИЯ' 22 387 184 20 8 $C.muted $true)
+$compatibleText=if($hasCompatibleSetup){'Horizon '+$compatibleVersion+'  /  x64'}else{'Версия не определена'}
+$compatibleLabel=Label $side $compatibleText 22 411 184 25 10 $C.ink $true
+$download=Button $side 'Скачать установщик' 22 449 174 40 '#292046' $C.ink
+$download.Enabled=$hasCompatibleSetup
+[void](Label $side "Официальный установщик.`nПосле установки выберите horizon-launcher.exe." 22 500 184 59 8 $C.muted)
+function OpenOfficialSetup {
+    if (-not $hasCompatibleSetup) { return }
+    try { Start-Process -FilePath $env:HORIZON_SETUP_URL | Out-Null }
+    catch { $statusTitle.Text='ОШИБКА'; $statusTitle.ForeColor=Color '#ffb398'; $status.Text='Не удалось открыть ссылку на установщик: '+$_.Exception.Message }
+}
+$download.Add_Click({ OpenOfficialSetup })
 $main=New-Object Windows.Forms.Panel; $main.SetBounds(218,34,822,636); $main.BackColor=Color '#130e2a'; $form.Controls.Add($main)
 $main.Add_Paint({param($sender,$e)
  $g=$e.Graphics; function PaintRect($c,$x,$y,$w,$h){$b=New-Object Drawing.SolidBrush((Color $c));$g.FillRectangle($b,$x,$y,$w,$h);$b.Dispose()}
