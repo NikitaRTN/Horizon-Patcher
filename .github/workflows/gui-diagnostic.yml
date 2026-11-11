@@ -1,6 +1,7 @@
 name: Temporary GUI diagnostic
 on:
-  workflow_dispatch:
+  push:
+    branches: [feat/rust-html-interface]
 permissions:
   contents: read
 jobs:
