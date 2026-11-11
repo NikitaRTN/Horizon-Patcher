@@ -17,7 +17,7 @@ jobs:
           "PATCH_PAYLOAD=$env:RUNNER_TEMP\dummy.gz" >> $env:GITHUB_ENV
           "PATCH_PAYLOAD_SHA256=$('0' * 64)" >> $env:GITHUB_ENV
           "OFFICIAL_SHA256=$('0' * 64)" >> $env:GITHUB_ENV
-          "PATCHER_BUILD_TAG=patcher-0.2.60-diagnostic" >> $env:GITHUB_ENV
+          "PATCHER_BUILD_TAG=patcher-0.2.60-12345678" >> $env:GITHUB_ENV
       - run: cargo build --release --locked
       - name: Test real WebView
         shell: pwsh
