@@ -18286,7 +18286,7 @@ index 4867e43..0144d5f 100644
  }
 diff --git a/launcher/src/offline_java.rs b/launcher/src/offline_java.rs
 new file mode 100644
-index 0000000..9040f72
+index 0000000..c77510d
 --- /dev/null
 +++ b/launcher/src/offline_java.rs
 @@ -0,0 +1,177 @@
@@ -18306,7 +18306,7 @@ index 0000000..9040f72
 +    }
 +    Ok(crate::java_launch::Player {
 +        name: name.to_string(),
-+        uuid: format!("{:032x}", horizon_protocol::crypto::offline_uuid(name)),
++        uuid: format!("{:032x}", horizon_platform::protocol::offline_uuid(name)),
 +        token: "0".into(),
 +        xuid: String::new(),
 +    })
