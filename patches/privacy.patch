@@ -17118,7 +17118,7 @@ index 0000000..a2ade17
 +    }
 +}
 diff --git a/launcher/src/frame.rs b/launcher/src/frame.rs
-index 07cc6da..af0f296 100644
+index 07cc6da..70e4793 100644
 --- a/launcher/src/frame.rs
 +++ b/launcher/src/frame.rs
 @@ -6,6 +6,7 @@ use super::*;
@@ -17138,7 +17138,7 @@ index 07cc6da..af0f296 100644
          let t = self.theme;
          let soft = self.look.accent_soft;
          self.load_packs();
-@@ -475,36 +476,7 @@ impl Launcher {
+@@ -475,36 +476,6 @@ impl Launcher {
              _ => {}
          }
  
@@ -17172,11 +17172,10 @@ index 07cc6da..af0f296 100644
 -            foot = foot.child(side);
 -        }
 -
-+        if let Some(card) = self.patcher_update_card() { foot = foot.child(card); }
          if !self.links.discord.is_empty() {
              let url = self.links.discord.clone();
              foot = foot.child(keyboard(
-@@ -588,7 +560,11 @@ impl Launcher {
+@@ -588,7 +559,11 @@ impl Launcher {
                  .id("launcher-version")
                  .px(px(8.))
                  .pt(px(8.))
@@ -17189,7 +17188,7 @@ index 07cc6da..af0f296 100644
          );
  
          crate::glass::plate(radius::PANEL)
-@@ -638,7 +614,10 @@ impl Launcher {
+@@ -638,7 +613,10 @@ impl Launcher {
              }));
  
          let (name, how) = self.who_plays();
@@ -17201,7 +17200,7 @@ index 07cc6da..af0f296 100644
          let open = self.account_menu;
          let chip =
              div()
-@@ -701,7 +680,7 @@ impl Launcher {
+@@ -701,7 +679,7 @@ impl Launcher {
              .children(self.glass_account_menu(cx));
  
          // Signing in with Microsoft, while nobody is: the mockup's button.
@@ -17210,7 +17209,7 @@ index 07cc6da..af0f296 100644
              keyboard(
                  div()
                      .id("topbar-sign-in")
-@@ -795,7 +774,7 @@ impl Launcher {
+@@ -795,7 +773,7 @@ impl Launcher {
          }
          let t = self.theme;
          let soft = self.look.accent_soft;
@@ -17219,7 +17218,7 @@ index 07cc6da..af0f296 100644
          let mut menu = ui::popover(250.)
              .id("account-menu")
              .occlude()
-@@ -805,7 +784,13 @@ impl Launcher {
+@@ -805,7 +783,13 @@ impl Launcher {
                  cx.notify();
              }));
          for (i, (who, name, how)) in self.players().into_iter().enumerate() {
@@ -17234,7 +17233,7 @@ index 07cc6da..af0f296 100644
              let id = SharedString::from(format!("account-pick-{i}"));
              menu = menu.child(keyboard(
                  track_hover(
-@@ -826,12 +811,18 @@ impl Launcher {
+@@ -826,12 +810,18 @@ impl Launcher {
                                  .size(px(30.))
                                  .rounded(px(8.))
                                  .overflow_hidden()
@@ -17259,7 +17258,7 @@ index 07cc6da..af0f296 100644
                          )
                          .child(
                              div()
-@@ -851,7 +842,7 @@ impl Launcher {
+@@ -851,7 +841,7 @@ impl Launcher {
                              d.child(ui::icon("tick-02", 16., ui::color(soft)).relative())
                          })
                          .on_click(cx.listener(move |this, _: &ClickEvent, _, cx| {
