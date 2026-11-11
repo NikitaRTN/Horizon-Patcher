@@ -7,11 +7,19 @@ $checks = @'
 if ($hasCompatibleSetup -ne $script:expectedEnabled -or $download.Enabled -ne $script:expectedEnabled) { throw 'Unexpected download button state' }
 if ($script:expectedEnabled -and $compatibleLabel.Text -ne 'Horizon 0.2.59  /  x64') { throw 'Wrong compatible version label' }
 if (-not $script:expectedEnabled -and $compatibleLabel.Text -match '0\.2\.59') { throw 'Displayed an unverified version' }
-OpenOfficialSetup
+$form.StartPosition = 'Manual'
+$form.Location = New-Object Drawing.Point(-30000,-30000)
+$form.ShowInTaskbar = $false
+$form.Show()
+[Windows.Forms.Application]::DoEvents()
+SetBusy $true
+if ($download.Enabled -ne $script:expectedEnabled) { throw 'Launcher scan disabled the download button' }
+$download.PerformClick()
 if ($script:expectedEnabled -and $script:opened -cne $env:HORIZON_SETUP_URL) { throw 'Wrong installer URL' }
 if (-not $script:expectedEnabled -and $script:opened) { throw 'Opened an unsafe or unknown URL' }
 $form.Dispose()
 '@
+$source = [regex]::Replace($source, '\$form\.Add_Shown\(\{ StartWorker .scan. \}\)', '')
 $source = $source.Replace($end, $checks)
 function Start-Process { param([string]$FilePath) $script:opened = $FilePath }
 try {

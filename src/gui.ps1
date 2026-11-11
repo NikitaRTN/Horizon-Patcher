@@ -2,87 +2,74 @@ $ErrorActionPreference='Stop'
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 [System.Windows.Forms.Application]::EnableVisualStyles()
-$C=@{bg='#0e0a22'; side='#14102d'; panel='#1c1536'; border='#493b6e'; ink='#f9f6ff'; muted='#b6a8d1'; accent='#7454ff'; green='#74dfb6'}
+$C=@{bg='#0b0817'; panel='#171127'; inner='#100c1d'; border='#373047'; ink='#f7f5ff'; muted='#aaa1c4'; accent='#6e56ff'; green='#84dfbc'}
 function Color([string]$x) { [Drawing.ColorTranslator]::FromHtml($x) }
 function Label($parent,$text,$x,$y,$w,$h,$size,$color,$bold=$false) {
- $v=New-Object Windows.Forms.Label; $v.Text=$text; $v.SetBounds($x,$y,$w,$h); $v.ForeColor=Color $color; $v.BackColor=[Drawing.Color]::Transparent; $style=if($bold){[Drawing.FontStyle]::Bold}else{[Drawing.FontStyle]::Regular}; $v.Font=New-Object Drawing.Font('Segoe UI',[float]$size,$style); $parent.Controls.Add($v); return $v
+    $v=New-Object Windows.Forms.Label; $v.Text=$text; $v.SetBounds($x,$y,$w,$h); $v.ForeColor=Color $color; $v.BackColor=[Drawing.Color]::Transparent
+    $style=if($bold){[Drawing.FontStyle]::Bold}else{[Drawing.FontStyle]::Regular}; $v.Font=New-Object Drawing.Font('Segoe UI',[float]$size,$style); $parent.Controls.Add($v); return $v
 }
-function PixelRegion($v) {
- $w=$v.Width; $h=$v.Height; $p=New-Object Drawing.Drawing2D.GraphicsPath; [Drawing.Point[]]$points=@((New-Object Drawing.Point(4,0)),(New-Object Drawing.Point(($w-4),0)),(New-Object Drawing.Point(($w-4),4)),(New-Object Drawing.Point($w,4)),(New-Object Drawing.Point($w,($h-4))),(New-Object Drawing.Point(($w-4),($h-4))),(New-Object Drawing.Point(($w-4),$h)),(New-Object Drawing.Point(4,$h)),(New-Object Drawing.Point(4,($h-4))),(New-Object Drawing.Point(0,($h-4))),(New-Object Drawing.Point(0,4)),(New-Object Drawing.Point(4,4))); $p.AddPolygon($points); $v.Region=New-Object Drawing.Region($p); $p.Dispose()
+function Round($control,[int]$radius) {
+    $w=$control.Width; $h=$control.Height; $d=$radius*2; $p=New-Object Drawing.Drawing2D.GraphicsPath
+    $p.AddArc(0,0,$d,$d,180,90); $p.AddArc(($w-$d),0,$d,$d,270,90); $p.AddArc(($w-$d),($h-$d),$d,$d,0,90); $p.AddArc(0,($h-$d),$d,$d,90,90); $p.CloseFigure()
+    $control.Region=New-Object Drawing.Region($p); $p.Dispose()
 }
 function Button($parent,$text,$x,$y,$w,$h,$fill,$fg) {
- $v=New-Object Windows.Forms.Button; $v.Text=$text; $v.SetBounds($x,$y,$w,$h); $v.FlatStyle='Flat'; $v.FlatAppearance.BorderSize=1; $v.FlatAppearance.BorderColor=Color $C.border; $v.FlatAppearance.MouseOverBackColor=Color '#584598'; $v.BackColor=Color $fill; $v.ForeColor=Color $fg; $v.Font=New-Object Drawing.Font('Segoe UI',10,[Drawing.FontStyle]::Bold); $v.Cursor=[Windows.Forms.Cursors]::Hand; PixelRegion $v; $parent.Controls.Add($v); return $v
+    $v=New-Object Windows.Forms.Button; $v.Text=$text; $v.SetBounds($x,$y,$w,$h); $v.FlatStyle='Flat'; $v.FlatAppearance.BorderSize=0; $v.FlatAppearance.MouseOverBackColor=Color '#44375c'; $v.BackColor=Color $fill; $v.ForeColor=Color $fg; $v.Font=New-Object Drawing.Font('Segoe UI',10,[Drawing.FontStyle]::Bold); $v.Cursor=[Windows.Forms.Cursors]::Hand; Round $v 8; $parent.Controls.Add($v); return $v
 }
-function Mark($parent,$x,$y,$size) {
- $v=New-Object Windows.Forms.Panel; $v.SetBounds($x,$y,$size,$size); $v.BackColor=Color '#11101f'; PixelRegion $v; $parent.Controls.Add($v)
- $v.Add_Paint({param($sender,$e) $n=$sender.Width; $white=New-Object Drawing.SolidBrush((Color '#f8f6ff')); $violet=New-Object Drawing.SolidBrush((Color '#8b72ff')); $e.Graphics.FillRectangle($white,[int]($n*.25),[int]($n*.19),[int]($n*.11),[int]($n*.62)); $e.Graphics.FillRectangle($white,[int]($n*.64),[int]($n*.19),[int]($n*.11),[int]($n*.62)); $e.Graphics.FillRectangle($violet,[int]($n*.08),[int]($n*.46),[int]($n*.84),[Math]::Max(3,[int]($n*.08))); $white.Dispose(); $violet.Dispose()})
+function Card($parent,$x,$y,$w,$h) { $p=New-Object Windows.Forms.Panel; $p.SetBounds($x,$y,$w,$h); $p.BackColor=Color $C.panel; Round $p 14; $parent.Controls.Add($p); return $p }
+function Sky([int]$w,[int]$h) {
+    $bmp=New-Object Drawing.Bitmap($w,$h); $g=[Drawing.Graphics]::FromImage($bmp)
+    $r=New-Object Drawing.Rectangle(0,0,$w,$h); $gradient=New-Object Drawing.Drawing2D.LinearGradientBrush($r,(Color '#0b0817'),(Color '#edb46f'),[Drawing.Drawing2D.LinearGradientMode]::Vertical)
+    $blend=New-Object Drawing.Drawing2D.ColorBlend; $blend.Positions=[single[]]@(0,.38,.62,.76,.87,1); $blend.Colors=[Drawing.Color[]]@((Color '#0b0817'),(Color '#110c24'),(Color '#22133d'),(Color '#4c2159'),(Color '#8a3b64'),(Color '#edb46f')); $gradient.InterpolationColors=$blend; $g.FillRectangle($gradient,$r); $gradient.Dispose()
+    $rng=New-Object Random(813); $star=New-Object Drawing.SolidBrush([Drawing.Color]::FromArgb(100,205,192,255)); for($i=0;$i -lt 90;$i++){ $x=$rng.Next(12,$w-12); $y=$rng.Next(72,($h-140)); $g.FillRectangle($star,$x,$y,2,2) }; $star.Dispose()
+    $sun=New-Object Drawing.SolidBrush((Color '#f9ca87')); $cx=780; $base=$h-190
+    foreach($band in @(@(-35,0,70,8),@(-53,10,106,10),@(-65,22,130,12),@(-72,36,144,14),@(-75,53,150,14),@(-70,72,140,8),@(-60,85,120,6))){$g.FillRectangle($sun,($cx+$band[0]),($base+$band[1]),$band[2],$band[3])}; $sun.Dispose()
+    $cloud=New-Object Drawing.SolidBrush((Color '#6d376c')); foreach($c in @(@(70,100,130),@(245,80,145),@(660,120,200),@(850,92,140))){$g.FillRectangle($cloud,$c[0],($h-$c[1]),$c[2],6)}; $cloud.Dispose()
+    $hill=New-Object Drawing.SolidBrush((Color '#231138')); $g.FillRectangle($hill,0,($h-65),$w,65); foreach($c in @(@(0,50,180),@(190,43,150),@(610,50,210),@(860,68,180))){$g.FillRectangle($hill,$c[0],($h-$c[1]),$c[2],$c[1])}; $hill.Dispose()
+    $front=New-Object Drawing.SolidBrush((Color '#120921')); $g.FillRectangle($front,0,($h-25),$w,25); foreach($x in @(24,310,420,850,985)){$g.FillRectangle($front,$x,($h-57),6,42); $g.FillRectangle($front,($x-10),($h-43),26,6); $g.FillRectangle($front,($x-6),($h-51),18,6)}; $g.Dispose(); return $bmp
 }
-$form=New-Object Windows.Forms.Form; $form.Text='Horizon Privacy Patcher'; $form.FormBorderStyle='None'; $form.ClientSize=New-Object Drawing.Size(1040,670); $form.StartPosition='CenterScreen'; $form.BackColor=Color $C.bg; $form.Font=New-Object Drawing.Font('Segoe UI',10); $form.KeyPreview=$true
-$form.Add_KeyDown({ if ($_.KeyCode -eq 'Escape' -and -not $script:busy) { $form.Close() } })
-$bar=New-Object Windows.Forms.Panel; $bar.SetBounds(0,0,1040,34); $bar.BackColor=Color '#090719'; $form.Controls.Add($bar)
-[void](Label $bar '✣' 16 5 22 24 12 $C.ink $true); [void](Label $bar 'Horizon Privacy Patcher' 41 8 280 22 9 $C.muted)
-$min=Button $bar '—' 958 0 40 33 '#090719' $C.muted; $close=Button $bar '×' 999 0 40 33 '#090719' $C.muted; $min.FlatAppearance.BorderSize=0; $close.FlatAppearance.BorderSize=0
-$min.Add_Click({$form.WindowState='Minimized'}); $close.Add_Click({if(-not $script:busy){$form.Close()}})
-$bar.Add_MouseDown({ if ($_.Button -eq 'Left') { $script:drag=$true; $script:dragX=$_.X; $script:dragY=$_.Y } }); $bar.Add_MouseUp({$script:drag=$false}); $bar.Add_MouseMove({if($script:drag){$p=[Windows.Forms.Cursor]::Position; $form.Location=New-Object Drawing.Point(($p.X-$script:dragX),($p.Y-$script:dragY))}})
-$side=New-Object Windows.Forms.Panel; $side.SetBounds(0,34,218,636); $side.BackColor=Color $C.side; $form.Controls.Add($side)
-[void](Label $side 'HORIZON' 22 24 150 28 13 $C.ink $true); [void](Label $side 'PRIVACY PATCHER' 23 50 170 22 8 $C.muted $true)
-[void](Label $side 'ПРИЛОЖЕНИЕ' 22 108 170 20 8 $C.muted $true)
-$nav=New-Object Windows.Forms.Panel; $nav.SetBounds(12,134,194,56); $nav.BackColor=Color '#29204b'; PixelRegion $nav; $side.Controls.Add($nav)
-Mark $nav 9 8 40; [void](Label $nav 'Патчер Horizon' 58 9 128 22 10 $C.ink $true); [void](Label $nav '■  Windows' 58 31 110 19 8 $C.green)
-[void](Label $side 'ПОСЛЕ ПРИМЕНЕНИЯ' 22 238 185 22 8 $C.muted $true)
-[void](Label $side '01' 22 270 28 23 9 '#8e78ed' $true); [void](Label $side 'Офлайн-профиль' 54 270 145 24 9 $C.ink)
-[void](Label $side '02' 22 306 28 23 9 '#8e78ed' $true); [void](Label $side 'Телеметрия Horizon' 54 306 145 24 9 $C.ink)
-[void](Label $side '03' 22 342 28 23 9 '#8e78ed' $true); [void](Label $side 'Проверка обновлений' 54 342 155 24 9 $C.ink)
-[void](Label $side 'Неофициальный проект' 22 564 180 22 9 $C.muted); $version=Label $side $env:HORIZON_PATCHER_TAG 22 587 185 32 8 $C.muted
-# The URL is tied to this build's version, not the latest upstream release.
+$form=New-Object Windows.Forms.Form; $form.Text='Horizon Privacy Patcher'; $form.FormBorderStyle='FixedSingle'; $form.MaximizeBox=$false; $form.ClientSize=New-Object Drawing.Size(1040,660); $form.StartPosition='CenterScreen'; $form.BackColor=Color $C.bg; $form.BackgroundImage=Sky 1040 660; $form.Font=New-Object Drawing.Font('Segoe UI',10); $form.KeyPreview=$true
+$form.Add_KeyDown({if ($_.KeyCode -eq 'Escape' -and -not $script:busy) { $form.Close() }})
+$header=New-Object Windows.Forms.Panel; $header.SetBounds(0,0,1040,60); $header.BackColor=Color '#0c0918'; $form.Controls.Add($header)
+[void](Label $header 'H' 32 15 28 30 16 '#a793ff' $true)
+[void](Label $header 'Horizon' 62 18 85 26 11 $C.ink $true)
+[void](Label $header 'PRIVACY PATCHER' 153 21 190 23 9 '#a793ff' $true)
+[void](Label $header 'WINDOWS  •  PORTABLE' 806 21 220 22 9 $C.muted $true)
+[void](Label $form 'HORIZON LAUNCHER  /  WINDOWS X64' 42 102 500 22 9 '#b5add1' $true)
+[void](Label $form 'Лаунчер, который вы знаете,' 40 141 560 42 23 $C.ink $true)
+[void](Label $form 'без лишней телеметрии.' 40 181 560 42 23 '#a793ff' $true)
+[void](Label $form 'Выберите лаунчер, закройте его и примените патч.' 42 234 540 24 10 $C.muted)
+$card=Card $form 42 285 525 260
+[void](Label $card '01  /  ВЫБОР ЛАУНЧЕРА' 20 17 310 20 9 '#a793ff' $true)
+[void](Label $card 'Выберите файл Horizon' 20 42 340 29 13 $C.ink $true)
+$refresh=Button $card 'Обновить' 388 22 117 36 '#30283f' $C.ink
+[void](Label $card 'Выберите horizon-launcher.exe, а не установщик.' 20 76 480 22 9 $C.muted)
+$list=New-Object Windows.Forms.ListBox; $list.SetBounds(20,105,485,67); $list.BorderStyle='None'; $list.BackColor=Color $C.inner; $list.ForeColor=Color $C.ink; $list.Font=New-Object Drawing.Font('Segoe UI',10); $list.IntegralHeight=$false; $list.DrawMode='OwnerDrawFixed'; $list.ItemHeight=31; $card.Controls.Add($list)
+$list.Add_DrawItem({param($sender,$e) if($e.Index -lt 0){return}; $selected=($e.State -band [Windows.Forms.DrawItemState]::Selected) -ne 0; $bg=if($selected){'#352953'}else{'#100c1d'}; $brush=New-Object Drawing.SolidBrush((Color $bg)); $e.Graphics.FillRectangle($brush,$e.Bounds); $brush.Dispose(); if($selected){$b=New-Object Drawing.SolidBrush((Color $C.accent)); $e.Graphics.FillRectangle($b,$e.Bounds.X,$e.Bounds.Y,4,$e.Bounds.Height);$b.Dispose()}; $rect=New-Object Drawing.Rectangle(($e.Bounds.X+14),$e.Bounds.Y,($e.Bounds.Width-28),$e.Bounds.Height); $flags=[Windows.Forms.TextFormatFlags]::Left -bor [Windows.Forms.TextFormatFlags]::VerticalCenter -bor [Windows.Forms.TextFormatFlags]::EndEllipsis; [Windows.Forms.TextRenderer]::DrawText($e.Graphics,[string]$sender.Items[$e.Index],$sender.Font,$rect,(Color $C.ink),$flags); if(($e.State -band [Windows.Forms.DrawItemState]::Focus) -ne 0){$e.DrawFocusRectangle()} })
+$apply=Button $card 'Применить патч' 20 192 201 47 $C.accent $C.ink; $apply.FlatAppearance.MouseOverBackColor=Color '#826dff'; $apply.Enabled=$false
+$browse=Button $card 'Выбрать вручную' 233 192 190 47 '#30283f' $C.ink
+$releaseCard=Card $form 600 127 398 418
+[void](Label $releaseCard 'СОВМЕСТИМАЯ ВЕРСИЯ' 24 23 340 22 9 '#a793ff' $true)
 $compatibleVersion=$env:HORIZON_PATCHER_VERSION
 $expectedSetup='https://github.com/horizon-rust/horizon/releases/download/launcher%40'+$compatibleVersion+'/horizon-launcher-setup.exe'
 $hasCompatibleSetup=($compatibleVersion -cmatch '^[0-9]+\.[0-9]+\.[0-9]+$' -and $env:HORIZON_SETUP_URL -ceq $expectedSetup)
-[void](Label $side 'СОВМЕСТИМАЯ ВЕРСИЯ' 22 387 184 20 8 $C.muted $true)
 $compatibleText=if($hasCompatibleSetup){'Horizon '+$compatibleVersion+'  /  x64'}else{'Версия не определена'}
-$compatibleLabel=Label $side $compatibleText 22 411 184 25 10 $C.ink $true
-$download=Button $side 'Скачать установщик' 22 449 174 40 '#292046' $C.ink
-$download.Enabled=$hasCompatibleSetup
-[void](Label $side "Официальный установщик.`nПосле установки выберите horizon-launcher.exe." 22 500 184 59 8 $C.muted)
+$compatibleLabel=Label $releaseCard $compatibleText 24 54 350 34 16 $C.ink $true
+[void](Label $releaseCard 'Официальный установщик без изменений' 24 94 350 24 9 $C.muted)
+$download=Button $releaseCard 'Скачать установщик' 24 130 350 48 '#6e56ff' $C.ink; $download.FlatAppearance.MouseOverBackColor=Color '#826dff'; $download.Enabled=$hasCompatibleSetup
+[void](Label $releaseCard '02  /  СТАТУС' 24 212 350 22 9 '#a793ff' $true)
+$statusTitle=Label $releaseCard 'ПОИСК ЛАУНЧЕРА' 24 242 350 25 10 $C.green $true
+$status=Label $releaseCard 'Ищем лаунчер в стандартных папках…' 24 275 350 80 10 $C.ink
+[void](Label $releaseCard 'Проверка файла перед применением' 24 374 350 22 9 $C.muted)
+[void](Label $form 'Windows x64    •    Резервная копия    •    Неофициальный проект' 42 572 730 24 9 '#d0c6e2')
+$tip=New-Object Windows.Forms.ToolTip
+$list.Add_SelectedIndexChanged({if($list.SelectedIndex -ge 0){$tip.SetToolTip($list,[string]$list.SelectedItem)}})
 function OpenOfficialSetup {
     if (-not $hasCompatibleSetup) { return }
     try { Start-Process -FilePath $env:HORIZON_SETUP_URL | Out-Null }
     catch { $statusTitle.Text='ОШИБКА'; $statusTitle.ForeColor=Color '#ffb398'; $status.Text='Не удалось открыть ссылку на установщик: '+$_.Exception.Message }
 }
 $download.Add_Click({ OpenOfficialSetup })
-$main=New-Object Windows.Forms.Panel; $main.SetBounds(218,34,822,636); $main.BackColor=Color '#130e2a'; $form.Controls.Add($main)
-$main.Add_Paint({param($sender,$e)
- $g=$e.Graphics; function PaintRect($c,$x,$y,$w,$h){$b=New-Object Drawing.SolidBrush((Color $c));$g.FillRectangle($b,$x,$y,$w,$h);$b.Dispose()}
- $rect=New-Object Drawing.Rectangle(0,0,822,636); $grad=New-Object Drawing.Drawing2D.LinearGradientBrush($rect,(Color '#110d28'),(Color '#522f65'),90); $g.FillRectangle($grad,$rect); $grad.Dispose()
- PaintRect '#120d27' 0 0 822 51; PaintRect '#403458' 0 50 822 1
- foreach($p in @(@(420,93),@(540,129),@(657,78),@(752,151),@(319,164),@(765,190),@(705,116),@(603,176),@(338,92))){PaintRect '#a995ca' $p[0] $p[1] 2 2}
- PaintRect '#5c366f' 0 527 822 22; PaintRect '#814477' 0 549 822 20; PaintRect '#b35c7b' 0 569 822 20; PaintRect '#e27d74' 0 589 822 47
- PaintRect '#ffdd9c' 557 540 52 6; PaintRect '#ffdd9c' 543 546 80 7; PaintRect '#ffdd9c' 531 553 104 8; PaintRect '#ffdd9c' 519 561 128 10; PaintRect '#ffdd9c' 508 571 150 12; PaintRect '#ffc383' 501 583 164 9
- PaintRect '#302052' 0 604 105 32; PaintRect '#302052' 105 612 91 24; PaintRect '#302052' 196 600 94 36; PaintRect '#302052' 290 615 112 21; PaintRect '#302052' 402 605 100 31; PaintRect '#302052' 502 616 112 20; PaintRect '#302052' 614 605 104 31; PaintRect '#302052' 718 613 104 23
- PaintRect '#110c27' 0 624 160 12; PaintRect '#110c27' 160 630 170 6; PaintRect '#110c27' 330 624 157 12; PaintRect '#110c27' 487 631 138 5; PaintRect '#110c27' 625 625 197 11
- foreach($x in @(72,258,472,688,768)){PaintRect '#110c27' $x 590 7 46; PaintRect '#110c27' ($x-8) 602 23 5}; foreach($x in @(150,360,590)){PaintRect '#110c27' $x 607 5 29; PaintRect '#110c27' ($x-7) 600 19 9}
-})
-[void](Label $main 'ПАТЧЕР  /  ГЛАВНАЯ' 34 15 340 22 8 $C.muted $true); [void](Label $main '■  WINDOWS  ·  PORTABLE' 620 15 180 20 8 $C.green $true)
-Mark $main 34 76 54
-[void](Label $main 'Horizon' 102 68 310 54 29 $C.ink $true)
-[void](Label $main 'Патчер приватности' 104 120 375 25 10 $C.muted)
-[void](Label $main 'Подготовьте лаунчер к игре без лишней телеметрии.' 34 148 710 24 10 $C.ink)
-$card=New-Object Windows.Forms.Panel; $card.SetBounds(34,183,752,245); $card.BackColor=Color $C.panel; PixelRegion $card; $main.Controls.Add($card)
-$card.Add_Paint({param($sender,$e) $p=New-Object Drawing.Pen((Color '#493961')); $e.Graphics.DrawRectangle($p,0,0,($sender.Width-1),($sender.Height-1)); $p.Dispose()})
-[void](Label $card '01  /  ВЫБОР ЛАУНЧЕРА' 24 16 350 20 8 $C.muted $true)
-[void](Label $card 'Выберите Horizon' 24 38 360 28 13 $C.ink $true)
-[void](Label $card 'Найденные файлы' 24 70 350 20 9 $C.muted)
-$refresh=Button $card '↻  Обновить' 596 28 132 38 '#292046' $C.ink
-$list=New-Object Windows.Forms.ListBox; $list.SetBounds(24,97,704,66); $list.BorderStyle='None'; $list.BackColor=Color '#100c25'; $list.ForeColor=Color $C.ink; $list.Font=New-Object Drawing.Font('Segoe UI',10); $list.IntegralHeight=$false; $list.DrawMode='OwnerDrawFixed'; $list.ItemHeight=33; $card.Controls.Add($list)
-$list.Add_DrawItem({param($sender,$e) if($e.Index -lt 0){return}; $selected=($e.State -band [Windows.Forms.DrawItemState]::Selected) -ne 0; $bg=if($selected){'#37295e'}else{'#100c25'}; $brush=New-Object Drawing.SolidBrush((Color $bg)); $e.Graphics.FillRectangle($brush,$e.Bounds); $brush.Dispose(); if($selected){$b=New-Object Drawing.SolidBrush((Color $C.accent)); $e.Graphics.FillRectangle($b,$e.Bounds.X,$e.Bounds.Y,4,$e.Bounds.Height);$b.Dispose()}; $rect=New-Object Drawing.Rectangle(($e.Bounds.X+16),$e.Bounds.Y,($e.Bounds.Width-30),$e.Bounds.Height); $flags=[Windows.Forms.TextFormatFlags]::Left -bor [Windows.Forms.TextFormatFlags]::VerticalCenter -bor [Windows.Forms.TextFormatFlags]::EndEllipsis; [Windows.Forms.TextRenderer]::DrawText($e.Graphics,[string]$sender.Items[$e.Index],$sender.Font,$rect,(Color $C.ink),$flags); if(($e.State -band [Windows.Forms.DrawItemState]::Focus) -ne 0){$e.DrawFocusRectangle()} })
-$browse=Button $card 'Выбрать вручную…' 24 184 190 43 '#2a2048' $C.ink
-$apply=Button $card 'Применить патч  →' 505 184 223 43 $C.accent $C.ink; $apply.FlatAppearance.BorderColor=Color '#9e8aff'; $apply.Enabled=$false
-$statusBox=New-Object Windows.Forms.Panel; $statusBox.SetBounds(34,444,752,69); $statusBox.BackColor=Color '#18122f'; PixelRegion $statusBox; $main.Controls.Add($statusBox)
-$statusBox.Add_Paint({param($sender,$e) $p=New-Object Drawing.Pen((Color '#40345d')); $e.Graphics.DrawRectangle($p,0,0,($sender.Width-1),($sender.Height-1)); $p.Dispose()})
-$statusTitle=Label $statusBox 'ПОИСК ЛАУНЧЕРА' 20 10 700 19 8 $C.green $true
-$status=Label $statusBox 'Ищем лаунчер в стандартных папках…' 20 31 710 31 10 $C.ink
-$tip=New-Object Windows.Forms.ToolTip
-$list.Add_SelectedIndexChanged({if($list.SelectedIndex -ge 0){$tip.SetToolTip($list,[string]$list.SelectedItem)}})
 
 $script:busy=$false; $script:worker=$null; $script:kind=''; $script:outTask=$null; $script:errTask=$null
 function SetBusy([bool]$value) { $script:busy=$value; $refresh.Enabled=-not $value; $browse.Enabled=-not $value; $list.Enabled=-not $value; $apply.Enabled=(-not $value -and $list.SelectedIndex -ge 0) }
