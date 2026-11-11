@@ -44,14 +44,7 @@ fn install(proxy: EventLoopProxy<Message>, target: PathBuf) {
         let _ = proxy.send_event(Message::Installed(result));
     });
 }
-fn diag(s: &str) {
-    if let Ok(path) = std::env::var("PATCHER_GUI_DIAGNOSTIC") {
-        use std::io::Write;
-        if let Ok(mut f) = std::fs::OpenOptions::new().create(true).append(true).open(path) { let _ = writeln!(f, "{s}"); }
-    }
-}
 pub fn run(smoke: bool) -> Result<(), String> {
-    if smoke { diag("start"); }
     let mut event_loop = EventLoopBuilder::<Message>::with_user_event().build();
     let proxy = event_loop.create_proxy();
     let window = WindowBuilder::new()
@@ -69,12 +62,24 @@ pub fn run(smoke: bool) -> Result<(), String> {
         });
     }
     let ipc_proxy = proxy.clone();
+    let initial_html_navigation = std::cell::Cell::new(true);
     let webview = WebViewBuilder::new()
         .with_html(HTML)
-        .with_navigation_handler(move |url| { if smoke { diag(&format!("navigation {url}")); } url == "about:blank" })
-        .with_on_page_load_handler(move |_event, url| { if smoke { diag(&format!("page load {url}")); } })
+        // WebView2 represents NavigateToString as a data: navigation. Permit
+        // that initial local document only; all subsequent external navigation is denied.
+        .with_navigation_handler(move |url| {
+            if url == "about:blank" {
+                return true;
+            }
+            if initial_html_navigation.get()
+                && url.starts_with("data:text/html;charset=utf-8;base64,")
+            {
+                initial_html_navigation.set(false);
+                return true;
+            }
+            false
+        })
         .with_ipc_handler(move |request| {
-            if smoke { diag(&format!("ipc {}", request.body())); }
             let _ = ipc_proxy.send_event(Message::Ipc(request.body().clone()));
         })
         .build(&window)
@@ -90,13 +95,12 @@ pub fn run(smoke: bool) -> Result<(), String> {
         match event {
             Event::WindowEvent { event: WindowEvent::CloseRequested, .. } if !busy => *flow = ControlFlow::Exit,
             Event::UserEvent(Message::Scanned(found)) => {
-                if smoke { diag("scan result"); }
                 busy = false; paths = found; files_message(&webview, &paths, 0);
                 if smoke {
                     let _ = webview.evaluate_script(r#"(() => { const b=document.getElementById('btnDownload'), c=document.getElementById('starCanvas'), v=document.getElementById('compatibleVersion').textContent; let ok=!!b && !b.disabled && !!c && c.width>0 && !!v && document.body.getBoundingClientRect().width>0; window.onNativeMessage({type:'init',version:null,tag:''}); ok=ok && b.disabled; window.onNativeMessage({type:'init',version:v,tag:'smoke'}); window.onNativeMessage({type:'busy',kind:'scan'}); ok=ok && !b.disabled; if(ok)b.click(); window.ipc.postMessage(JSON.stringify({action:'smoke_report',ok})); })();"#);
                 }
             }
-            Event::UserEvent(Message::SmokeTimeout) if smoke => { diag("timeout"); *flow = ControlFlow::Exit; }
+            Event::UserEvent(Message::SmokeTimeout) if smoke => { *flow = ControlFlow::Exit; }
             Event::UserEvent(Message::Installed(result)) => {
                 busy = false;
                 match result {
