@@ -3,7 +3,7 @@ use tao::{
     dpi::LogicalSize,
     event::{Event, WindowEvent},
     event_loop::{ControlFlow, EventLoopBuilder, EventLoopProxy},
-    platform::run_return::EventLoopExtRunReturn,
+    platform::{run_return::EventLoopExtRunReturn, windows::WindowBuilderExtWindows},
     window::WindowBuilder,
 };
 use wry::{WebView, WebViewBuilder};
@@ -50,6 +50,8 @@ pub fn run(smoke: bool) -> Result<(), String> {
     let window = WindowBuilder::new()
         .with_title("Horizon Privacy Patcher")
         .with_decorations(false)
+        // Tao's undecorated shadow retains a native accent-colored frame.
+        .with_undecorated_shadow(false)
         .with_inner_size(LogicalSize::new(1180.0, 760.0))
         .with_min_inner_size(LogicalSize::new(820.0, 620.0))
         .build(&event_loop)
