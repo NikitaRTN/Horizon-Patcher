@@ -3,12 +3,39 @@ use tao::{
     dpi::LogicalSize,
     event::{Event, WindowEvent},
     event_loop::{ControlFlow, EventLoopBuilder, EventLoopProxy},
-    platform::run_return::EventLoopExtRunReturn,
+    platform::{run_return::EventLoopExtRunReturn, windows::WindowExtWindows},
     window::WindowBuilder,
 };
 use wry::{WebView, WebViewBuilder};
 
 const HTML: &str = include_str!("gui.html");
+
+// Windows 11 otherwise draws the user's accent color around a frameless window.
+// Change only this window, keeping rounded corners, resizing and the system shadow.
+fn hide_native_border(window: &tao::window::Window) {
+    #[link(name = "dwmapi")]
+    extern "system" {
+        fn DwmSetWindowAttribute(
+            hwnd: isize,
+            attribute: u32,
+            value: *const std::ffi::c_void,
+            size: u32,
+        ) -> i32;
+    }
+    const DWMWA_BORDER_COLOR: u32 = 34;
+    const DWMWA_COLOR_NONE: u32 = 0xffff_fffe;
+    // SAFETY: hwnd belongs to a live Tao window; the COLORREF pointer and size
+    // remain valid for this synchronous call. Older Windows versions may reject
+    // this optional attribute; that must not prevent the patcher from starting.
+    unsafe {
+        let _ = DwmSetWindowAttribute(
+            window.hwnd(),
+            DWMWA_BORDER_COLOR,
+            (&DWMWA_COLOR_NONE as *const u32).cast(),
+            std::mem::size_of::<u32>() as u32,
+        );
+    }
+}
 
 enum Message {
     Ipc(String),
@@ -54,6 +81,7 @@ pub fn run(smoke: bool) -> Result<(), String> {
         .with_min_inner_size(LogicalSize::new(820.0, 620.0))
         .build(&event_loop)
         .map_err(|e| format!("Не удалось создать окно: {e}"))?;
+    hide_native_border(&window);
     if smoke {
         let watchdog = proxy.clone();
         thread::spawn(move || {
