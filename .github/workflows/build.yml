@@ -52,6 +52,20 @@ jobs:
           gh release view $buildTag --repo $env:GITHUB_REPOSITORY 2>$null | Out-Null
           if ($LASTEXITCODE -eq 0) { 'publish=false' >> $env:GITHUB_OUTPUT } else { 'publish=true' >> $env:GITHUB_OUTPUT }
           $global:LASTEXITCODE = 0
+      # sccache keys compiled objects by content, so a new upstream release only
+      # recompiles what actually changed instead of the whole launcher from
+      # scratch. Enabled only on trusted main/release runs; PR builds keep the
+      # existing rust-cache and launcher-cache behavior and never write here.
+      - name: Start sccache compiler cache
+        if: steps.prepare.outputs.publish == 'true' && github.event_name != 'pull_request'
+        uses: Mozilla-Actions/sccache-action@fc920bf0ec8de6ee65d409111f7ec508035751ba # v0.0.11
+      - name: Route Rust compilation through sccache
+        if: steps.prepare.outputs.publish == 'true' && github.event_name != 'pull_request'
+        shell: pwsh
+        run: |
+          "RUSTC_WRAPPER=sccache" >> $env:GITHUB_ENV
+          "SCCACHE_GHA_ENABLED=true" >> $env:GITHUB_ENV
+          "CARGO_INCREMENTAL=0" >> $env:GITHUB_ENV
       - name: Fetch source and official assets
         if: steps.prepare.outputs.publish == 'true'
         shell: pwsh
