@@ -1,5 +1,5 @@
 diff --git a/docs/hosting.md b/docs/hosting.md
-index 990add6..a1a6479 100644
+index cb57a59fa6..6f005a2239 100644
 --- a/docs/hosting.md
 +++ b/docs/hosting.md
 @@ -20,7 +20,7 @@ plan are in [server.md](server.md).
@@ -12,7 +12,7 @@ index 990add6..a1a6479 100644
    2026-11-01 and newer) sign their chat, and with `enforce-secure-profile=true` (the default) unsigned chat is
    refused. On an offline server, or for a player without a chat session, chat stays unsigned and shows as not
 diff --git a/docs/launcher-commands.md b/docs/launcher-commands.md
-index e528b89..bbc79e8 100644
+index e528b8967c..bbc79e8517 100644
 --- a/docs/launcher-commands.md
 +++ b/docs/launcher-commands.md
 @@ -188,7 +188,7 @@ MCP: `account_sign_out`, needs `confirm: true`.
@@ -67,7 +67,7 @@ index e528b89..bbc79e8 100644
  
  Show the launcher's settings, or set one (the Settings page): selected-version TAG, game-architecture auto|x64|arm64, minecraft-dir PATH, server-dir PATH ("default" resets a folder), install-new-versions on|off, prune-old-versions on|off (delete old versions after an install, keeping the selected one, the ones instances use and the newest few), keep-versions N (how many of the newest to keep; "default" is 2), opening-animation on|off, proxy http://host:port|socks5://host:port ("default" removes it), while-playing stay|minimize|hide (what the window does while the game runs), language system|en|fr|ru|de|zh|es|uk|pl (the window's language; system follows the computer's), accent violet|blue|teal|green|amber|red|pink|#rrggbb|DEGREES (a named accent, any colour, or any hue), background PATH (a picture behind Home; "default" shows Horizon's landscape), native-cache-gib N (combined native compilation cache limit in GiB, default 30; 0 disables automatic cleanup), native-profile performance|dev|release (the profile native mods build with: performance is incremental, dev rebuilds a mod quickest for a slow game, release is slowest to build and slightly faster to play).
 diff --git a/docs/microsoft-account.md b/docs/microsoft-account.md
-index 888ec66..952956b 100644
+index 888ec668ae..952956b56f 100644
 --- a/docs/microsoft-account.md
 +++ b/docs/microsoft-account.md
 @@ -2,9 +2,9 @@
@@ -128,7 +128,7 @@ index 888ec66..952956b 100644
  
  `HORIZON_API_DISCOVERY` overrides the discovery URL, the counterpart of authlib's
 diff --git a/docs/play-with-friends.md b/docs/play-with-friends.md
-index 43a946c..297897a 100644
+index 43a946c9af..297897a978 100644
 --- a/docs/play-with-friends.md
 +++ b/docs/play-with-friends.md
 @@ -116,8 +116,8 @@ run at once there, and each must finish within 10 seconds however slowly its byt
@@ -143,7 +143,7 @@ index 43a946c..297897a 100644
  
  ## Relays (optional)
 diff --git a/launcher/README.md b/launcher/README.md
-index 9309542..bfba31a 100644
+index 9309542136..bfba31ab33 100644
 --- a/launcher/README.md
 +++ b/launcher/README.md
 @@ -160,11 +160,15 @@ The opening, then Play ([clip](docs/opening.webm)):
@@ -201,7 +201,7 @@ index 9309542..bfba31a 100644
  Credential Manager, or the Secret Service on Linux), never in a log or the command line;
  `accounts.json` in the data folder keeps only names and UUIDs. On Linux without a keychain they go
 diff --git a/launcher/lang/af.json b/launcher/lang/af.json
-index 401608c..16ec38a 100644
+index 401608c154..16ec38a929 100644
 --- a/launcher/lang/af.json
 +++ b/launcher/lang/af.json
 @@ -37,6 +37,7 @@
@@ -387,7 +387,7 @@ index 401608c..16ec38a 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Meld aan met die rekening wat Minecraft: Java Edition besit. Jou naam en vel kom saam na aanlyn bedieners, soos in ander lanseerders.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Microsoft se eie bladsy maak in jou blaaier oop. Horizon sien nooit jou wagwoord nie.",
 diff --git a/launcher/lang/ar.json b/launcher/lang/ar.json
-index 90a8c34..59461d2 100644
+index 90a8c34ef8..59461d2bdd 100644
 --- a/launcher/lang/ar.json
 +++ b/launcher/lang/ar.json
 @@ -37,6 +37,7 @@
@@ -573,7 +573,7 @@ index 90a8c34..59461d2 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "سجّل الدخول بالحساب الذي يملك Minecraft: Java Edition. يرافقك اسمك ومظهرك إلى الخوادم عبر الإنترنت، كما في المشغلات الأخرى.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "تُفتح صفحة Microsoft نفسها في متصفحك. لا يرى Horizon كلمة مرورك أبدًا.",
 diff --git a/launcher/lang/az.json b/launcher/lang/az.json
-index ddcdca2..891ca26 100644
+index ddcdca2b82..891ca26867 100644
 --- a/launcher/lang/az.json
 +++ b/launcher/lang/az.json
 @@ -37,6 +37,7 @@
@@ -759,7 +759,7 @@ index ddcdca2..891ca26 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Minecraft: Java Edition-a sahib olan hesabla daxil olun. Adınız və dəriniz digər işəsalanlar kimi onlayn serverlərə gəlir.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Brauzerinizdə Microsoftun öz səhifəsi açılır. Horizon parolunuzu heç vaxt görmür.",
 diff --git a/launcher/lang/ba.json b/launcher/lang/ba.json
-index 2137423..caa7dad 100644
+index 21374234f9..caa7dadef7 100644
 --- a/launcher/lang/ba.json
 +++ b/launcher/lang/ba.json
 @@ -37,6 +37,7 @@
@@ -945,7 +945,7 @@ index 2137423..caa7dad 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Minecraft: Java Баҫмаға эйә булған иҫәп яҙмаһы менән инергә. Һеҙҙең исем һәм тире менән бергә килә онлайн-серверҙар, башҡа стартерҙар кеүек.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Браузерығыҙҙа Microsoft үҙ бите асыла. Horizon бер ҡасан да һеҙҙең паролде күрмәй.",
 diff --git a/launcher/lang/be.json b/launcher/lang/be.json
-index 340dd43..3b12444 100644
+index 340dd439d3..3b124448cc 100644
 --- a/launcher/lang/be.json
 +++ b/launcher/lang/be.json
 @@ -37,6 +37,7 @@
@@ -1131,7 +1131,7 @@ index 340dd43..3b12444 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Увайдзіце з уліковым запісам, які валодае Minecraft: Java Edition. Ваша імя і скін прыходзяць на анлайн-серверы, як і ў іншых праграмах запуску.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "У вашым браўзеры адкрыецца ўласная старонка Microsoft. Horizon ніколі не бачыць ваш пароль.",
 diff --git a/launcher/lang/bg.json b/launcher/lang/bg.json
-index c971da8..22a9267 100644
+index c971da8468..22a926731a 100644
 --- a/launcher/lang/bg.json
 +++ b/launcher/lang/bg.json
 @@ -37,6 +37,7 @@
@@ -1317,7 +1317,7 @@ index c971da8..22a9267 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Влезте с акаунта, който притежава Minecraft: Java Edition. Името и скинът ви остават с вас и в онлайн сървърите, както в другите лаунчери.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Собствената страница на Microsoft се отваря в браузъра ви. Horizon никога не вижда паролата ви.",
 diff --git a/launcher/lang/br.json b/launcher/lang/br.json
-index 412544f..4200e57 100644
+index 412544fa15..4200e578c5 100644
 --- a/launcher/lang/br.json
 +++ b/launcher/lang/br.json
 @@ -37,6 +37,7 @@
@@ -1503,7 +1503,7 @@ index 412544f..4200e57 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "En em lugañ gant ar gont a zo perc'henn war Minecraft: Java Embannadur. Hoc'h anv hag ho kroc'hen a zeu war servijerioù enlinenn, evel e lañserioù all.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Pajenn Microsoft e-unan a zigor en ho merdeer. Horizon ne wel ket ho ker-tremen morse.",
 diff --git a/launcher/lang/bs.json b/launcher/lang/bs.json
-index 3f33273..f37a02a 100644
+index 3f332733ae..f37a02aaeb 100644
 --- a/launcher/lang/bs.json
 +++ b/launcher/lang/bs.json
 @@ -37,6 +37,7 @@
@@ -1689,7 +1689,7 @@ index 3f33273..f37a02a 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Prijavite se sa nalogom koji poseduje Minecraft: Java Edition. Vaše ime i koža dolaze na mrežne servere, kao u drugim lanserima.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Microsoftova vlastita stranica se otvara u vašem pretraživaču. Horizon nikada ne vidi vašu lozinku.",
 diff --git a/launcher/lang/ca.json b/launcher/lang/ca.json
-index 294b108..3406bf0 100644
+index 294b10849b..3406bf0fee 100644
 --- a/launcher/lang/ca.json
 +++ b/launcher/lang/ca.json
 @@ -37,6 +37,7 @@
@@ -1883,7 +1883,7 @@ index 294b108..3406bf0 100644
    "Open {page}": "Obre {page}",
    "Opened {path}": "S'ha obert {path}",
 diff --git a/launcher/lang/cs.json b/launcher/lang/cs.json
-index 591e7fa..10900b8 100644
+index 591e7fa2e7..10900b8263 100644
 --- a/launcher/lang/cs.json
 +++ b/launcher/lang/cs.json
 @@ -37,6 +37,7 @@
@@ -2069,7 +2069,7 @@ index 591e7fa..10900b8 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Přihlaste se účtem, který vlastní Minecraft: Java Edition. Vaše jméno a skin vás doprovázejí na online servery, stejně jako v jiných launcherech.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Vlastní stránka Microsoftu se otevře ve vašem prohlížeči. Horizon vaše heslo nikdy nevidí.",
 diff --git a/launcher/lang/cv.json b/launcher/lang/cv.json
-index b9c003b..2320372 100644
+index b9c003b3c6..2320372e8a 100644
 --- a/launcher/lang/cv.json
 +++ b/launcher/lang/cv.json
 @@ -37,6 +37,7 @@
@@ -2255,7 +2255,7 @@ index b9c003b..2320372 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Minecraft: Java Издание тытса тӑракан аккаунтпа кӗрӗр. Сирӗн ятӑрпа тир ытти лаунчерсенчи пекех онлайн-серверсем ҫине кӗреҫҫӗ.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Сирӗн браузерта Microsoft хӑйӗн страници уҫӑлать. Horizon сирӗн паролье нихӑҫан та курмасть.",
 diff --git a/launcher/lang/cy.json b/launcher/lang/cy.json
-index f1a0fc4..478d1d2 100644
+index f1a0fc408a..478d1d26fe 100644
 --- a/launcher/lang/cy.json
 +++ b/launcher/lang/cy.json
 @@ -37,6 +37,7 @@
@@ -2441,7 +2441,7 @@ index f1a0fc4..478d1d2 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Mewngofnodwch gyda'r cyfrif sy'n berchen ar Minecraft: Java Edition. Daw eich enw a'ch croen i weinyddion ar-lein, fel mewn lanswyr eraill.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Mae tudalen Microsoft ei hun yn agor yn eich porwr. Nid yw Horizon byth yn gweld eich cyfrinair.",
 diff --git a/launcher/lang/da.json b/launcher/lang/da.json
-index 9bef3e9..e2655e0 100644
+index 9bef3e9bc6..e2655e0b2f 100644
 --- a/launcher/lang/da.json
 +++ b/launcher/lang/da.json
 @@ -37,6 +37,7 @@
@@ -2627,7 +2627,7 @@ index 9bef3e9..e2655e0 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Log ind med den konto, der ejer Minecraft: Java Edition. Dit navn og dit skin følger med til onlineservere, ligesom i andre launchere.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Microsofts egen side åbner i din browser. Horizon ser aldrig din adgangskode.",
 diff --git a/launcher/lang/de.json b/launcher/lang/de.json
-index dfbee26..76f17f6 100644
+index dfbee26d65..76f17f6ec8 100644
 --- a/launcher/lang/de.json
 +++ b/launcher/lang/de.json
 @@ -37,6 +37,7 @@
@@ -2813,7 +2813,7 @@ index dfbee26..76f17f6 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Melde dich mit dem Konto an, dem Minecraft: Java Edition gehört. Dein Name und Skin kommen mit auf Online-Server, wie in anderen Launchern.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Microsofts eigene Seite öffnet sich in deinem Browser. Horizon sieht dein Passwort nie.",
 diff --git a/launcher/lang/el.json b/launcher/lang/el.json
-index 9c6e586..87a1ef0 100644
+index 9c6e58674f..87a1ef0b0e 100644
 --- a/launcher/lang/el.json
 +++ b/launcher/lang/el.json
 @@ -37,6 +37,7 @@
@@ -2999,7 +2999,7 @@ index 9c6e586..87a1ef0 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Συνδεθείτε με τον λογαριασμό που κατέχει το Minecraft: Java Edition. Το όνομα και το skin σας σας ακολουθούν στους διαδικτυακούς διακομιστές, όπως και σε άλλους launchers.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Η σελίδα της ίδιας της Microsoft ανοίγει στο πρόγραμμα περιήγησής σας. Το Horizon δεν βλέπει ποτέ τον κωδικό πρόσβασής σας.",
 diff --git a/launcher/lang/eo.json b/launcher/lang/eo.json
-index 6496429..e10d8b0 100644
+index 6496429de8..e10d8b0ffe 100644
 --- a/launcher/lang/eo.json
 +++ b/launcher/lang/eo.json
 @@ -37,6 +37,7 @@
@@ -3185,7 +3185,7 @@ index 6496429..e10d8b0 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Ensalutu kun la konto, kiu posedas Minecraft: Java Eldono. Via nomo kaj haŭto venas al interretaj serviloj, kiel en aliaj lanĉiloj.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "La propra paĝo de Microsoft malfermiĝas en via retumilo. Horizon neniam vidas vian pasvorton.",
 diff --git a/launcher/lang/es.json b/launcher/lang/es.json
-index be8da8c..e7ce54b 100644
+index be8da8c055..e7ce54b549 100644
 --- a/launcher/lang/es.json
 +++ b/launcher/lang/es.json
 @@ -37,6 +37,7 @@
@@ -3371,7 +3371,7 @@ index be8da8c..e7ce54b 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Inicia sesión con la cuenta que tiene Minecraft: Java Edition. Tu nombre y tu skin te acompañan a los servidores en línea, como en otros launchers.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "La propia página de Microsoft se abre en tu navegador. Horizon nunca ve tu contraseña.",
 diff --git a/launcher/lang/et.json b/launcher/lang/et.json
-index 2276627..7468269 100644
+index 2276627bb9..7468269e93 100644
 --- a/launcher/lang/et.json
 +++ b/launcher/lang/et.json
 @@ -37,6 +37,7 @@
@@ -3565,7 +3565,7 @@ index 2276627..7468269 100644
    "Open {page}": "Ava {page}",
    "Opened {path}": "Avatud: {path}",
 diff --git a/launcher/lang/eu.json b/launcher/lang/eu.json
-index 2af1f57..604003e 100644
+index 2af1f57abb..604003ee1a 100644
 --- a/launcher/lang/eu.json
 +++ b/launcher/lang/eu.json
 @@ -37,6 +37,7 @@
@@ -3751,7 +3751,7 @@ index 2af1f57..604003e 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Hasi saioa Minecraft: Java Edition jabea den kontuarekin. Zure izena eta azala lineako zerbitzarietara datoz, beste abiarazle batzuetan bezala.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Microsoft-en orria irekitzen da zure arakatzailean. Horizon ez du inoiz zure pasahitza ikusten.",
 diff --git a/launcher/lang/fa.json b/launcher/lang/fa.json
-index 0a610e2..0753f2d 100644
+index 0a610e2999..0753f2dc3d 100644
 --- a/launcher/lang/fa.json
 +++ b/launcher/lang/fa.json
 @@ -37,6 +37,7 @@
@@ -3937,7 +3937,7 @@ index 0a610e2..0753f2d 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "با حسابی وارد شوید که مالک Minecraft: Java Edition است. نام و اسکین شما مثل لانچرهای دیگر به سرورهای آنلاین هم می‌آید.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "صفحهٔ خود Microsoft در مرورگرتان باز می‌شود. Horizon هرگز رمز عبور شما را نمی‌بیند.",
 diff --git a/launcher/lang/fi.json b/launcher/lang/fi.json
-index 577c3ac..917a704 100644
+index 577c3ac72c..917a7040b4 100644
 --- a/launcher/lang/fi.json
 +++ b/launcher/lang/fi.json
 @@ -37,6 +37,7 @@
@@ -4123,7 +4123,7 @@ index 577c3ac..917a704 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Kirjaudu sisään tilillä, joka omistaa Minecraft: Java Editionin. Nimesi ja skinisi kulkevat mukanasi verkkopalvelimille, kuten muissakin käynnistysohjelmissa.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Microsoftin oma sivu avautuu selaimessasi. Horizon ei koskaan näe salasanaasi.",
 diff --git a/launcher/lang/fil.json b/launcher/lang/fil.json
-index 86e89ac..4e8719f 100644
+index 86e89ac658..4e8719f0d6 100644
 --- a/launcher/lang/fil.json
 +++ b/launcher/lang/fil.json
 @@ -37,6 +37,7 @@
@@ -4309,7 +4309,7 @@ index 86e89ac..4e8719f 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Mag-sign in gamit ang account na nagmamay-ari ng Minecraft: Java Edition. Ang iyong pangalan at balat ay kasama sa mga online na server, tulad ng sa iba pang mga launcher.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Ang sariling pahina ng Microsoft ay bubukas sa iyong browser. Hindi kailanman nakikita ni Horizon ang iyong password.",
 diff --git a/launcher/lang/fo.json b/launcher/lang/fo.json
-index 9ae3f00..c8fb196 100644
+index 9ae3f000c1..c8fb196f01 100644
 --- a/launcher/lang/fo.json
 +++ b/launcher/lang/fo.json
 @@ -37,6 +37,7 @@
@@ -4495,7 +4495,7 @@ index 9ae3f00..c8fb196 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Rita inn við kontuni, sum eigur Minecraft: Java Útgáva. Títt navn og húð koma við á online ambætarar, eins og í øðrum launcher.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Egna síðan hjá Microsoft letur upp í tínum kaga. Horizon sær ongantíð títt loyniorð.",
 diff --git a/launcher/lang/fr.json b/launcher/lang/fr.json
-index 4745d57..40a56ac 100644
+index 4745d577fb..40a56acf95 100644
 --- a/launcher/lang/fr.json
 +++ b/launcher/lang/fr.json
 @@ -37,6 +37,7 @@
@@ -4681,7 +4681,7 @@ index 4745d57..40a56ac 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Connectez-vous avec le compte qui possède Minecraft: Java Edition. Votre nom et votre skin vous suivent sur les serveurs en ligne, comme dans les autres launchers.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "La page de Microsoft s'ouvre dans votre navigateur. Horizon ne voit jamais votre mot de passe.",
 diff --git a/launcher/lang/fur.json b/launcher/lang/fur.json
-index fc6b5fa..ecec3ed 100644
+index fc6b5faef1..ecec3ed325 100644
 --- a/launcher/lang/fur.json
 +++ b/launcher/lang/fur.json
 @@ -37,6 +37,7 @@
@@ -4867,7 +4867,7 @@ index fc6b5fa..ecec3ed 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Accedi cul conto che al à Minecraft: Java Edizion. Il to non e la tô piel a vegnin dongje dai servidôrs in rêt, come in altris lançadôrs.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "La pagjine proprie di Microsoft si vierç tal navigadôr. Horizon no viôt mai la tô clâf.",
 diff --git a/launcher/lang/fy.json b/launcher/lang/fy.json
-index 652d546..9ff7640 100644
+index 652d5460a3..9ff7640dcf 100644
 --- a/launcher/lang/fy.json
 +++ b/launcher/lang/fy.json
 @@ -37,6 +37,7 @@
@@ -5053,7 +5053,7 @@ index 652d546..9ff7640 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Oanmelde mei it akkount dat eigner is fan Minecraft: Java Edition. Jo namme en hûd komme mei nei online servers, lykas yn oare lansearders.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "De eigen side fan Microsoft iepenet yn jo browser. Horizon sjocht jo wachtwurd nea.",
 diff --git a/launcher/lang/ga.json b/launcher/lang/ga.json
-index 97ed899..7133bd0 100644
+index 97ed899bd1..7133bd03a3 100644
 --- a/launcher/lang/ga.json
 +++ b/launcher/lang/ga.json
 @@ -37,6 +37,7 @@
@@ -5239,7 +5239,7 @@ index 97ed899..7133bd0 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Sínigh isteach leis an gcuntas ar leis Minecraft: Java Edition. Tagann d’ainm agus do chraiceann chuig freastalaithe ar líne, mar a dhéantar i lainseálaithe eile.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Osclaíonn leathanach Microsoft féin i do bhrabhsálaí. Ní fheiceann Horizon do phasfhocal riamh.",
 diff --git a/launcher/lang/gd.json b/launcher/lang/gd.json
-index 81fb415..08a03d7 100644
+index 81fb415306..08a03d7dd7 100644
 --- a/launcher/lang/gd.json
 +++ b/launcher/lang/gd.json
 @@ -37,6 +37,7 @@
@@ -5425,7 +5425,7 @@ index 81fb415..08a03d7 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Clàraich a-steach leis a’ chunntas leis a bheil Minecraft: Java Edition. Thig d’ ainm agus do chraiceann gu frithealaichean air-loidhne, mar ann an lannsaichean eile.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Tha duilleag Microsoft fhèin a’ fosgladh sa bhrobhsair agad. Horizon chan fhaic thu am facal-faire agad gu bràth.",
 diff --git a/launcher/lang/gl.json b/launcher/lang/gl.json
-index 646132f..b650c1b 100644
+index 646132f2b0..b650c1b96d 100644
 --- a/launcher/lang/gl.json
 +++ b/launcher/lang/gl.json
 @@ -37,6 +37,7 @@
@@ -5611,7 +5611,7 @@ index 646132f..b650c1b 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Inicia sesión coa conta propietaria de Minecraft: Java Edition. O teu nome e a túa pel aparecen nos servidores en liña, como noutros lanzadores.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "A propia páxina de Microsoft ábrese no teu navegador. Horizon nunca ve o teu contrasinal.",
 diff --git a/launcher/lang/haw.json b/launcher/lang/haw.json
-index 8d37144..d665eb2 100644
+index 8d3714438c..d665eb2a18 100644
 --- a/launcher/lang/haw.json
 +++ b/launcher/lang/haw.json
 @@ -37,6 +37,7 @@
@@ -5797,7 +5797,7 @@ index 8d37144..d665eb2 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "E ʻeʻe me ka moʻokāki nona ka Minecraft: Java Edition. Hele mai kou inoa a me kou ʻili i nā kikowaena pūnaewele, e like me nā mea hoʻolaha ʻē aʻe.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Wehe ʻia ko Microsoft ʻaoʻao ponoʻī ma kāu polokalamu kele pūnaewele. ʻAʻole ʻike ʻo Horizon i kāu ʻōlelo huna.",
 diff --git a/launcher/lang/he.json b/launcher/lang/he.json
-index 3422215..e5211ac 100644
+index 342221508e..e5211ac5bf 100644
 --- a/launcher/lang/he.json
 +++ b/launcher/lang/he.json
 @@ -37,6 +37,7 @@
@@ -5983,7 +5983,7 @@ index 3422215..e5211ac 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "היכנס עם החשבון שבבעלותו Minecraft: Java Edition. השם והסקין שלך עוברים איתך לשרתים מקוונים, כמו במשגרים אחרים.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "הדף של Microsoft עצמה נפתח בדפדפן שלך. Horizon אף פעם לא רואה את הסיסמה שלך.",
 diff --git a/launcher/lang/hi.json b/launcher/lang/hi.json
-index 4cfc84c..d07d872 100644
+index 4cfc84cbe1..d07d872904 100644
 --- a/launcher/lang/hi.json
 +++ b/launcher/lang/hi.json
 @@ -37,6 +37,7 @@
@@ -6169,7 +6169,7 @@ index 4cfc84c..d07d872 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "उस खाते से साइन इन करें जिसके पास Minecraft: Java Edition है। आपका नाम और स्किन ऑनलाइन सर्वरों पर साथ आते हैं, दूसरे लॉन्चरों की तरह।",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Microsoft का अपना पेज आपके ब्राउज़र में खुलता है। Horizon आपका पासवर्ड कभी नहीं देखता।",
 diff --git a/launcher/lang/hr.json b/launcher/lang/hr.json
-index 7e957e2..2a2d4b9 100644
+index 7e957e23b2..2a2d4b9b35 100644
 --- a/launcher/lang/hr.json
 +++ b/launcher/lang/hr.json
 @@ -37,6 +37,7 @@
@@ -6355,7 +6355,7 @@ index 7e957e2..2a2d4b9 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Prijavi se računom koji posjeduje Minecraft: Java Edition. Tvoje ime i skin idu s tobom na mrežne poslužitelje, kao u drugim pokretačima.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Microsoftova stranica otvara se u tvom pregledniku. Horizon nikad ne vidi tvoju lozinku.",
 diff --git a/launcher/lang/hu.json b/launcher/lang/hu.json
-index e814a12..0f969de 100644
+index e814a1226e..0f969de4d0 100644
 --- a/launcher/lang/hu.json
 +++ b/launcher/lang/hu.json
 @@ -37,6 +37,7 @@
@@ -6541,7 +6541,7 @@ index e814a12..0f969de 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Jelentkezzen be azzal a fiókkal, amelyhez a Minecraft: Java Edition tartozik. A neve és a skinje Önnel tart az online szerverekre, mint más indítókban.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "A Microsoft saját oldala nyílik meg a böngészőjében. A Horizon soha nem látja a jelszavát.",
 diff --git a/launcher/lang/hy.json b/launcher/lang/hy.json
-index 02fab53..12974cb 100644
+index 02fab5338e..12974cb118 100644
 --- a/launcher/lang/hy.json
 +++ b/launcher/lang/hy.json
 @@ -37,6 +37,7 @@
@@ -6727,7 +6727,7 @@ index 02fab53..12974cb 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Մուտք գործեք այն հաշիվով, որին պատկանում է Minecraft՝ Java Edition: Ձեր անունը և մաշկը գալիս են առցանց սերվերներին, ինչպես մյուս գործարկիչներում:",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Ձեր բրաուզերում բացվում է Microsoft-ի սեփական էջը: Horizon երբեք չի տեսնում ձեր գաղտնաբառը:",
 diff --git a/launcher/lang/id.json b/launcher/lang/id.json
-index c10b06c..9e720cf 100644
+index c10b06c82d..9e720cf7c9 100644
 --- a/launcher/lang/id.json
 +++ b/launcher/lang/id.json
 @@ -37,6 +37,7 @@
@@ -6913,7 +6913,7 @@ index c10b06c..9e720cf 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Masuk dengan akun yang memiliki Minecraft: Java Edition. Nama dan skin-mu ikut ke server online, seperti di launcher lain.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Halaman Microsoft sendiri terbuka di browser-mu. Horizon tidak pernah melihat kata sandimu.",
 diff --git a/launcher/lang/ig.json b/launcher/lang/ig.json
-index 4e5b0ff..3deff00 100644
+index 4e5b0ffb05..3deff0070d 100644
 --- a/launcher/lang/ig.json
 +++ b/launcher/lang/ig.json
 @@ -37,6 +37,7 @@
@@ -7099,7 +7099,7 @@ index 4e5b0ff..3deff00 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Banye na akaụntụ nke nwere Minecraft: Java mbipụta. Aha gị na akpụkpọ gị na-abịa na sava ịntanetị, dị ka ọ dị na ndị nrụpụta ndị ọzọ.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Microsoft Ibe nke ya ga-emepe na ihe nchọgharị gị. Horizon anaghị ahụ paswọọdụ gị.",
 diff --git a/launcher/lang/is.json b/launcher/lang/is.json
-index 350b6e9..8836e03 100644
+index 350b6e9da3..8836e03a0d 100644
 --- a/launcher/lang/is.json
 +++ b/launcher/lang/is.json
 @@ -37,6 +37,7 @@
@@ -7293,7 +7293,7 @@ index 350b6e9..8836e03 100644
    "Open {page}": "Opna {page}",
    "Opened {path}": "Opnaði {path}",
 diff --git a/launcher/lang/it.json b/launcher/lang/it.json
-index 4750e8a..e8d22a5 100644
+index 4750e8abe3..e8d22a5dcb 100644
 --- a/launcher/lang/it.json
 +++ b/launcher/lang/it.json
 @@ -37,6 +37,7 @@
@@ -7479,7 +7479,7 @@ index 4750e8a..e8d22a5 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Accedi con l'account che possiede Minecraft: Java Edition. Il tuo nome e la tua skin ti seguono sui server online, come negli altri launcher.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "La pagina di Microsoft si apre nel browser. Horizon non vede mai la tua password.",
 diff --git a/launcher/lang/ja.json b/launcher/lang/ja.json
-index 674ff51..f4757ac 100644
+index 674ff51aff..f4757ace55 100644
 --- a/launcher/lang/ja.json
 +++ b/launcher/lang/ja.json
 @@ -102,9 +102,26 @@
@@ -7577,7 +7577,7 @@ index 674ff51..f4757ac 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Minecraft: Java Edition を所有するアカウントでサインインしてください。名前とスキンは、ほかのランチャーと同じようにオンラインサーバーでも使われます。",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Microsoft 自身のページがブラウザで開きます。Horizon がパスワードを見ることはありません。",
 diff --git a/launcher/lang/ka.json b/launcher/lang/ka.json
-index 68195a7..f24d77b 100644
+index 68195a7c63..f24d77ba36 100644
 --- a/launcher/lang/ka.json
 +++ b/launcher/lang/ka.json
 @@ -37,6 +37,7 @@
@@ -7763,7 +7763,7 @@ index 68195a7..f24d77b 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "შედით ანგარიშით, რომელსაც ფლობს Minecraft: Java Edition. თქვენი სახელი და კანი მოდის ონლაინ სერვერებზე, ისევე როგორც სხვა გამშვებებში.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Microsoft-ის საკუთარი გვერდი იხსნება თქვენს ბრაუზერში. Horizon არასოდეს ხედავს თქვენს პაროლს.",
 diff --git a/launcher/lang/kk.json b/launcher/lang/kk.json
-index 8fdad40..e714876 100644
+index 8fdad408b7..e71487602e 100644
 --- a/launcher/lang/kk.json
 +++ b/launcher/lang/kk.json
 @@ -37,6 +37,7 @@
@@ -7949,7 +7949,7 @@ index 8fdad40..e714876 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Minecraft: Java Edition иесі тіркелгімен кіріңіз. Сіздің атыңыз бен мұқабаңыз басқа іске қосу құрылғыларындағы сияқты онлайн серверлерге келеді.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Браузеріңізде Microsoft-тың жеке беті ашылады. Horizon құпия сөзіңізді ешқашан көрмейді.",
 diff --git a/launcher/lang/kn.json b/launcher/lang/kn.json
-index 6b3e91f..d5fff7a 100644
+index 6b3e91f112..d5fff7a435 100644
 --- a/launcher/lang/kn.json
 +++ b/launcher/lang/kn.json
 @@ -37,6 +37,7 @@
@@ -8135,7 +8135,7 @@ index 6b3e91f..d5fff7a 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Minecraft: Java ಆವೃತ್ತಿಯನ್ನು ಹೊಂದಿರುವ ಖಾತೆಯೊಂದಿಗೆ ಸೈನ್ ಇನ್ ಮಾಡಿ. ನಿಮ್ಮ ಹೆಸರು ಮತ್ತು ಚರ್ಮವು ಇತರ ಲಾಂಚರ್‌ಗಳಂತೆ ಆನ್‌ಲೈನ್ ಸರ್ವರ್‌ಗಳಿಗೆ ಬರುತ್ತದೆ.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Microsoft ನ ಸ್ವಂತ ಪುಟವು ನಿಮ್ಮ ಬ್ರೌಸರ್‌ನಲ್ಲಿ ತೆರೆಯುತ್ತದೆ. Horizon ನಿಮ್ಮ ಪಾಸ್‌ವರ್ಡ್ ಅನ್ನು ಎಂದಿಗೂ ನೋಡುವುದಿಲ್ಲ.",
 diff --git a/launcher/lang/ko.json b/launcher/lang/ko.json
-index 931061b..904c416 100644
+index 931061b821..904c416dd5 100644
 --- a/launcher/lang/ko.json
 +++ b/launcher/lang/ko.json
 @@ -37,6 +37,7 @@
@@ -8321,7 +8321,7 @@ index 931061b..904c416 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Minecraft: Java Edition을 소유한 계정으로 로그인하세요. 다른 런처처럼 이름과 스킨이 온라인 서버에서도 함께합니다.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Microsoft의 자체 페이지가 브라우저에서 열립니다. Horizon은 비밀번호를 절대 보지 않습니다.",
 diff --git a/launcher/lang/ky.json b/launcher/lang/ky.json
-index a63ce9e..85ec313 100644
+index a63ce9e548..85ec313661 100644
 --- a/launcher/lang/ky.json
 +++ b/launcher/lang/ky.json
 @@ -37,6 +37,7 @@
@@ -8507,7 +8507,7 @@ index a63ce9e..85ec313 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Minecraft: Java Чыгарылышына ээ болгон каттоо эсеби менен кириңиз. Сиздин атыңыз жана териңиз башка ишке киргизгичтер сыяктуу онлайн серверлерге келет.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Браузериңизде Microsoft'дин жеке баракчасы ачылат. Horizon сырсөзүңүздү эч качан көрбөйт.",
 diff --git a/launcher/lang/la.json b/launcher/lang/la.json
-index e2253b4..4984fe1 100644
+index e2253b464a..4984fe1f49 100644
 --- a/launcher/lang/la.json
 +++ b/launcher/lang/la.json
 @@ -37,6 +37,7 @@
@@ -8693,7 +8693,7 @@ index e2253b4..4984fe1 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Sign in cum ratione quae possidetMinecraft:JavaEditio altera. Tuum nomen et pellis pervenerunt ad servientes online, sicut in aliis launchers.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "MicrosoftPagina propria in navigatro tuo aperit.Horizonnumquam tua.",
 diff --git a/launcher/lang/lb.json b/launcher/lang/lb.json
-index 4915442..9a854aa 100644
+index 491544265c..9a854aa358 100644
 --- a/launcher/lang/lb.json
 +++ b/launcher/lang/lb.json
 @@ -37,6 +37,7 @@
@@ -8879,7 +8879,7 @@ index 4915442..9a854aa 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Mellt Iech un mat dem Kont deen Minecraft: Java Editioun gehéiert. Ären Numm an d'Haut kommen op Online Serveren, wéi an anere Startënnerlagen.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Dem Microsoft seng eege Säit gëtt an Ärem Browser op. Horizon gesäit Äert Passwuert ni.",
 diff --git a/launcher/lang/li.json b/launcher/lang/li.json
-index d6e79f9..b111dd1 100644
+index d6e79f9cde..b111dd120d 100644
 --- a/launcher/lang/li.json
 +++ b/launcher/lang/li.json
 @@ -37,6 +37,7 @@
@@ -9065,7 +9065,7 @@ index d6e79f9..b111dd1 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Meld aan mit ut account det Minecraft: Java Editie beziet. Uw naam en huid komme op online servers, zjus wie in aandere launchers.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Microsoft's eige pagina geit open in eur browser. Horizon zuut noets eur wachtwoord.",
 diff --git a/launcher/lang/lmo.json b/launcher/lang/lmo.json
-index deadaaa..81a2981 100644
+index deadaaa372..81a2981023 100644
 --- a/launcher/lang/lmo.json
 +++ b/launcher/lang/lmo.json
 @@ -37,6 +37,7 @@
@@ -9251,7 +9251,7 @@ index deadaaa..81a2981 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Accedi cunt el cunt che g’ha Minecraft: Java Ediziun. El tò nomm e la tò pel rivan süi server online, cuma en olter lanciador.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "La pagina di Microsoft se derva in del browser. Horizon vede mai la tua password.",
 diff --git a/launcher/lang/lo.json b/launcher/lang/lo.json
-index 6c501ee..a2522f6 100644
+index 6c501ee258..a2522f6f64 100644
 --- a/launcher/lang/lo.json
 +++ b/launcher/lang/lo.json
 @@ -37,6 +37,7 @@
@@ -9437,7 +9437,7 @@ index 6c501ee..a2522f6 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "ເຂົ້າສູ່ລະບົບດ້ວຍບັນຊີທີ່ເປັນເຈົ້າຂອງ Minecraft: Java Edition. ຊື່ ແລະຜິວໜັງຂອງເຈົ້າມາກັບເຊີບເວີອອນໄລນ໌, ຄືກັບຕົວເປີດໃຊ້ອື່ນໆ.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "ຫນ້າ Microsoft ຂອງຕົນເອງເປີດຢູ່ໃນຕົວທ່ອງເວັບຂອງທ່ານ. Horizon ບໍ່ເຄີຍເຫັນລະຫັດຜ່ານຂອງເຈົ້າ.",
 diff --git a/launcher/lang/lt.json b/launcher/lang/lt.json
-index d4c1562..363b146 100644
+index d4c1562301..363b1468cf 100644
 --- a/launcher/lang/lt.json
 +++ b/launcher/lang/lt.json
 @@ -37,6 +37,7 @@
@@ -9623,7 +9623,7 @@ index d4c1562..363b146 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Prisijunkite paskyra, kuriai priklauso „Minecraft: Java Edition“. Jūsų vardas ir išvaizda keliauja su jumis į internetinius serverius, kaip ir kitose paleidimo priemonėse.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Naršyklėje atsidaro paties „Microsoft“ puslapis. „Horizon“ niekada nemato jūsų slaptažodžio.",
 diff --git a/launcher/lang/lv.json b/launcher/lang/lv.json
-index bd8cbcd..d7157c2 100644
+index bd8cbcd9d2..d7157c2c4b 100644
 --- a/launcher/lang/lv.json
 +++ b/launcher/lang/lv.json
 @@ -37,6 +37,7 @@
@@ -9817,7 +9817,7 @@ index bd8cbcd..d7157c2 100644
    "Open {page}": "Atvērt {page}",
    "Opened {path}": "Atvērts: {path}",
 diff --git a/launcher/lang/mk.json b/launcher/lang/mk.json
-index c9f3523..4dd1488 100644
+index c9f3523611..4dd14889cb 100644
 --- a/launcher/lang/mk.json
 +++ b/launcher/lang/mk.json
 @@ -37,6 +37,7 @@
@@ -10003,7 +10003,7 @@ index c9f3523..4dd1488 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Пријавете се со сметката што ја поседува Minecraft: Java Edition. Вашето име и кожа доаѓаат на онлајн серверите, како и кај другите фрлачи.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Сопствената страница на Microsoft се отвора во вашиот прелистувач. Horizon никогаш не ја гледа вашата лозинка.",
 diff --git a/launcher/lang/mn.json b/launcher/lang/mn.json
-index 79bae3c..4cfc7dd 100644
+index 79bae3c7aa..4cfc7dd7b9 100644
 --- a/launcher/lang/mn.json
 +++ b/launcher/lang/mn.json
 @@ -37,6 +37,7 @@
@@ -10189,7 +10189,7 @@ index 79bae3c..4cfc7dd 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Minecraft: Java Edition-ийг эзэмшдэг бүртгэлээр нэвтэрнэ үү. Таны нэр болон арьс бусад эхлүүлэгчтэй адил онлайн серверүүдтэй хамт ирдэг.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Таны хөтөч дээр Microsoft-ын өөрийн хуудас нээгдэнэ. Horizon таны нууц үгийг хэзээ ч харахгүй.",
 diff --git a/launcher/lang/ms.json b/launcher/lang/ms.json
-index 46c5670..ad3ad63 100644
+index 46c56700f3..ad3ad63445 100644
 --- a/launcher/lang/ms.json
 +++ b/launcher/lang/ms.json
 @@ -37,6 +37,7 @@
@@ -10375,7 +10375,7 @@ index 46c5670..ad3ad63 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Log masuk dengan akaun yang memiliki Minecraft: Java Edition. Nama dan kulit anda disertakan dengan pelayan dalam talian, seperti dalam pelancar lain.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Halaman Microsoft sendiri dibuka dalam penyemak imbas anda. Horizon tidak pernah melihat kata laluan anda.",
 diff --git a/launcher/lang/mt.json b/launcher/lang/mt.json
-index a55fd79..eb54224 100644
+index a55fd794a6..eb542242ab 100644
 --- a/launcher/lang/mt.json
 +++ b/launcher/lang/mt.json
 @@ -37,6 +37,7 @@
@@ -10561,7 +10561,7 @@ index a55fd79..eb54224 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Idħol mal-kont li għandu Minecraft: Java Edizzjoni. Ismek u l-ġilda jiġu flimkien mas-servers online, bħal f'lanċjaturi oħra.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Il-paġna ta' Microsoft stess tiftaħ fil-browser tiegħek. Horizon qatt ma jara l-password tiegħek.",
 diff --git a/launcher/lang/nl.json b/launcher/lang/nl.json
-index be77d1b..e64fc64 100644
+index be77d1b60f..e64fc64c6d 100644
 --- a/launcher/lang/nl.json
 +++ b/launcher/lang/nl.json
 @@ -37,6 +37,7 @@
@@ -10747,7 +10747,7 @@ index be77d1b..e64fc64 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Meld je aan met het account dat Minecraft: Java Edition bezit. Je naam en skin gaan mee naar online servers, net als in andere launchers.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "De eigen pagina van Microsoft opent in je browser. Horizon ziet je wachtwoord nooit.",
 diff --git a/launcher/lang/no.json b/launcher/lang/no.json
-index 0efa489..34c1659 100644
+index 0efa489d8a..34c1659c4b 100644
 --- a/launcher/lang/no.json
 +++ b/launcher/lang/no.json
 @@ -37,6 +37,7 @@
@@ -10933,7 +10933,7 @@ index 0efa489..34c1659 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Logg på med kontoen som eier Minecraft: Java Edition. Navnet og skinnet ditt følger med til nettservere, som i andre oppstartere.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Microsofts egen side åpnes i nettleseren din. Horizon ser aldri passordet ditt.",
 diff --git a/launcher/lang/oc.json b/launcher/lang/oc.json
-index 298f136..d2508aa 100644
+index 298f1367d8..d2508aa7c4 100644
 --- a/launcher/lang/oc.json
 +++ b/launcher/lang/oc.json
 @@ -37,6 +37,7 @@
@@ -11119,7 +11119,7 @@ index 298f136..d2508aa 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Connectatz-vos amb lo compte que possedís Minecraft: Java Edicion. Vòstre nom e pèl venon als servidors en linha, coma dins d'autres lançaires.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "La pagina pròpria de Microsoft se dobrís dins vòstre navigador. Horizon vei pas jamai vòstre senhal.",
 diff --git a/launcher/lang/pl.json b/launcher/lang/pl.json
-index 3c4d5ad..6e9708d 100644
+index 3c4d5add62..6e9708d637 100644
 --- a/launcher/lang/pl.json
 +++ b/launcher/lang/pl.json
 @@ -37,6 +37,7 @@
@@ -11305,7 +11305,7 @@ index 3c4d5ad..6e9708d 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Zaloguj się kontem, które ma Minecraft: Java Edition. Twoja nazwa i skin trafią z tobą na serwery online, jak w innych launcherach.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Strona Microsoftu otwiera się w przeglądarce. Horizon nigdy nie widzi twojego hasła.",
 diff --git a/launcher/lang/pt-br.json b/launcher/lang/pt-br.json
-index 8818094..39ffb4b 100644
+index 8818094ae8..39ffb4b8fd 100644
 --- a/launcher/lang/pt-br.json
 +++ b/launcher/lang/pt-br.json
 @@ -102,9 +102,26 @@
@@ -11403,7 +11403,7 @@ index 8818094..39ffb4b 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Entre com a conta que tem o Minecraft: Java Edition. Seu nome e sua skin vão junto para os servidores online, como em outros launchers.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "A própria página da Microsoft abre no seu navegador. O Horizon nunca vê sua senha.",
 diff --git a/launcher/lang/pt.json b/launcher/lang/pt.json
-index 3e74b9b..412fc8d 100644
+index 3e74b9b405..412fc8d6d3 100644
 --- a/launcher/lang/pt.json
 +++ b/launcher/lang/pt.json
 @@ -37,6 +37,7 @@
@@ -11589,7 +11589,7 @@ index 3e74b9b..412fc8d 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Inicia sessão com a conta que tem o Minecraft: Java Edition. O teu nome e a tua skin vão contigo para os servidores online, como noutros launchers.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "A própria página da Microsoft abre no teu navegador. O Horizon nunca vê a tua palavra-passe.",
 diff --git a/launcher/lang/ro.json b/launcher/lang/ro.json
-index 5cb7f46..f99c1f8 100644
+index 5cb7f468f7..f99c1f8545 100644
 --- a/launcher/lang/ro.json
 +++ b/launcher/lang/ro.json
 @@ -37,6 +37,7 @@
@@ -11775,7 +11775,7 @@ index 5cb7f46..f99c1f8 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Conectați-vă cu contul care deține Minecraft: Java Edition. Numele și skinul vă însoțesc pe serverele online, ca în alte lansatoare.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Pagina Microsoft se deschide în browser. Horizon nu vă vede niciodată parola.",
 diff --git a/launcher/lang/ru.json b/launcher/lang/ru.json
-index 8109937..9fd8569 100644
+index 810993777f..9fd8569c17 100644
 --- a/launcher/lang/ru.json
 +++ b/launcher/lang/ru.json
 @@ -37,6 +37,7 @@
@@ -11961,7 +11961,7 @@ index 8109937..9fd8569 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Войдите в учётную запись, которой принадлежит Minecraft: Java Edition. Имя и скин будут с вами на онлайн-серверах, как в других лаунчерах.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Страница Microsoft открывается в вашем браузере. Horizon никогда не видит ваш пароль.",
 diff --git a/launcher/lang/sah.json b/launcher/lang/sah.json
-index 28d12b9..7e6d2c8 100644
+index 28d12b9cf8..7e6d2c8ec8 100644
 --- a/launcher/lang/sah.json
 +++ b/launcher/lang/sah.json
 @@ -37,6 +37,7 @@
@@ -12147,7 +12147,7 @@ index 28d12b9..7e6d2c8 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Minecraft: Java таһаарыылаах учуотунан киириҥ. Атын лаунчердарга курдук, эн ааккын уонна тирииҥ онлайн сервердэргэ киирэллэр.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Браузергар Microsoft бэйэтин страницата арыллар. Horizon парольгун хаһан да көрбөт.",
 diff --git a/launcher/lang/se.json b/launcher/lang/se.json
-index 22e2805..ca2712d 100644
+index 22e2805494..ca2712d256 100644
 --- a/launcher/lang/se.json
 +++ b/launcher/lang/se.json
 @@ -37,6 +37,7 @@
@@ -12333,7 +12333,7 @@ index 22e2805..ca2712d 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Logge sisa dan konttuin mii oamasta Minecraft: Java Edition. Du namma ja ivdni bohtet neahttabálvalusaide, nugo eará álggaheaddjiin.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Microsoft iežas siidu rahppo neahttasiiddus. Horizon ii goassege oainne du beassansáni.",
 diff --git a/launcher/lang/sk.json b/launcher/lang/sk.json
-index 311c39e..9f923ba 100644
+index 311c39ed6f..9f923ba124 100644
 --- a/launcher/lang/sk.json
 +++ b/launcher/lang/sk.json
 @@ -37,6 +37,7 @@
@@ -12519,7 +12519,7 @@ index 311c39e..9f923ba 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Prihláste sa účtom, ktorý vlastní Minecraft: Java Edition. Vaše meno a skin vás budú sprevádzať aj na online serveroch, ako v iných spúšťačoch.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Vo vašom prehliadači sa otvorí vlastná stránka spoločnosti Microsoft. Horizon nikdy nevidí vaše heslo.",
 diff --git a/launcher/lang/sl.json b/launcher/lang/sl.json
-index 926b3ac..cbcf856 100644
+index 926b3ac833..cbcf856723 100644
 --- a/launcher/lang/sl.json
 +++ b/launcher/lang/sl.json
 @@ -37,6 +37,7 @@
@@ -12713,7 +12713,7 @@ index 926b3ac..cbcf856 100644
    "Open {page}": "Odpri {page}",
    "Opened {path}": "Odprto: {path}",
 diff --git a/launcher/lang/so.json b/launcher/lang/so.json
-index 83d70c0..39605b9 100644
+index 83d70c02cc..39605b9040 100644
 --- a/launcher/lang/so.json
 +++ b/launcher/lang/so.json
 @@ -37,6 +37,7 @@
@@ -12899,7 +12899,7 @@ index 83d70c0..39605b9 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Ku gal akoontada leh Minecraft: Java Edition. Magacaaga iyo maqaarkaaga ayaa la socda server-yada khadka ah, sida soosaarayaasha kale.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Bogga Microsoft ayaa ka furan biraawsarkaaga. Horizon waligiis ma arko eraygaaga sirta ah",
 diff --git a/launcher/lang/sq.json b/launcher/lang/sq.json
-index b7ff5af..c549921 100644
+index b7ff5af7f8..c549921e31 100644
 --- a/launcher/lang/sq.json
 +++ b/launcher/lang/sq.json
 @@ -37,6 +37,7 @@
@@ -13085,7 +13085,7 @@ index b7ff5af..c549921 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Hyni me llogarinë që zotëron Minecraft: Java Edition. Emri dhe lëkura juaj vijnë së bashku në serverët në internet, si në lëshuesit e tjerë.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Faqja e vetë Microsoft hapet në shfletuesin tuaj. Horizon nuk e sheh kurrë fjalëkalimin tuaj.",
 diff --git a/launcher/lang/sr.json b/launcher/lang/sr.json
-index a242ce0..d09409b 100644
+index a242ce0e59..d09409bff9 100644
 --- a/launcher/lang/sr.json
 +++ b/launcher/lang/sr.json
 @@ -37,6 +37,7 @@
@@ -13279,7 +13279,7 @@ index a242ce0..d09409b 100644
    "Open {page}": "Отвори {page}",
    "Opened {path}": "Отворено: {path}",
 diff --git a/launcher/lang/sv.json b/launcher/lang/sv.json
-index b0d3992..4345b90 100644
+index b0d39925aa..4345b90644 100644
 --- a/launcher/lang/sv.json
 +++ b/launcher/lang/sv.json
 @@ -37,6 +37,7 @@
@@ -13465,7 +13465,7 @@ index b0d3992..4345b90 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Logga in med kontot som äger Minecraft: Java Edition. Ditt namn och din skin följer med till onlineservrar, precis som i andra launchers.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Microsofts egen sida öppnas i din webbläsare. Horizon ser aldrig ditt lösenord.",
 diff --git a/launcher/lang/szl.json b/launcher/lang/szl.json
-index be1b020..6c105fe 100644
+index be1b020d17..6c105fe81d 100644
 --- a/launcher/lang/szl.json
 +++ b/launcher/lang/szl.json
 @@ -37,6 +37,7 @@
@@ -13651,7 +13651,7 @@ index be1b020..6c105fe 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Zalogowaj sie ze kōntym, kere posiado Minecraft: Java Edycyjo. Twoje miano i skōra przichodzōm na serwerach internetowych, jak w inkszych launcherach.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "W przeglōndarzu ôtworzi sie włosno strōna Microsoft. Horizon nikej niy widzi twojigo hasła.",
 diff --git a/launcher/lang/ta.json b/launcher/lang/ta.json
-index a1a9a20..a7a26a1 100644
+index a1a9a20242..a7a26a1220 100644
 --- a/launcher/lang/ta.json
 +++ b/launcher/lang/ta.json
 @@ -37,6 +37,7 @@
@@ -13837,7 +13837,7 @@ index a1a9a20..a7a26a1 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Minecraft: Java Edition ஐ வைத்திருக்கும் கணக்கில் உள்நுழையவும். மற்ற லாஞ்சர்களைப் போலவே உங்கள் பெயரும் தோலும் ஆன்லைன் சேவையகங்களுக்கு வரும்.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Microsoft-இன் சொந்தப் பக்கம் உங்கள் உலாவியில் திறக்கும். Horizon உங்கள் கடவுச்சொல்லை ஒருபோதும் பார்ப்பதில்லை.",
 diff --git a/launcher/lang/th.json b/launcher/lang/th.json
-index d787c43..cfa823b 100644
+index 79e492473d..e6b98c983c 100644
 --- a/launcher/lang/th.json
 +++ b/launcher/lang/th.json
 @@ -37,6 +37,7 @@
@@ -13862,7 +13862,7 @@ index d787c43..cfa823b 100644
    "Instance": "อินสแตนซ์",
 +  "Classic arms": "แขนแบบคลาสสิก",
    "Versions": "เวอร์ชัน",
-   "Release build: slower to build, slightly faster game": "บิลด์ปกติ (Release): บิลด์ช้ากว่า เกมเร็วขึ้นเล็กน้อย",
+   "Release build: slower to build, slightly faster game": "บิลด์ Release: ใช้เวลาบิลด์นานกว่า แต่เกมจะทำงานได้เร็วขึ้นเล็กน้อย",
    "Performance build": "บิลด์เน้นประสิทธิภาพ (Performance)",
 @@ -169,6 +172,7 @@
    "about a minute left": "เหลือเวลาอีกประมาณหนึ่งนาที",
@@ -13877,7 +13877,7 @@ index d787c43..cfa823b 100644
    "Choose image…": "เลือกรูป…",
    "No worlds yet: they appear here once you play one.": "ยังไม่มีโลก: จะแสดงที่นี่เมื่อคุณเล่นสักโลก",
 +  "Offline names play without a Microsoft account that owns the game. Minecraft still comes from your own install.": "ชื่อออฟไลน์ใช้เล่นได้โดยไม่ต้องมีบัญชี Microsoft ที่มีเกม ส่วนตัว Minecraft ยังมาจากที่ติดตั้งไว้เอง",
-   "crash reports beside it": "พร้อมรายงานแครชข้างๆ",
+   "crash reports beside it": "พร้อมรายงานข้อผิดพลาด (Crash Reports)",
    "Install all": "ติดตั้งทั้งหมด",
    "No group": "ไม่มีกลุ่ม",
 @@ -197,6 +202,7 @@
@@ -13942,7 +13942,7 @@ index d787c43..cfa823b 100644
 +  "{name}'s skin": "สกินของ {name}",
    "Start": "เริ่ม",
    "No Minecraft install needed: Horizon downloads it from Mojang for your account.": "ไม่ต้องติดตั้ง Minecraft ก่อน: Horizon ดาวน์โหลดเกมจาก Mojang ให้ตามบัญชีของคุณ",
-   "Logs": "บันทึก",
+   "Logs": "ไฟล์บันทึก (Logs)",
 @@ -432,6 +447,7 @@
    "The wordmark, while the release list loads.": "โลโก้ Horizon ขณะโหลดรายการรุ่น",
    "Playing offline": "กำลังเล่นออฟไลน์",
@@ -13989,7 +13989,7 @@ index d787c43..cfa823b 100644
 +  "A name, 3 to 16 letters": "ชื่อ 3 ถึง 16 ตัวอักษร",
    "Installed {mods} from GitHub ({source}). Build it on the Mods page.": "ติดตั้ง {mods} จาก GitHub ({source}) แล้ว บิลด์ได้ในหน้าม็อด",
    "Settings, Keys, Generate access token. It's kept in this computer's keychain and only sent to Tailscale.": "การตั้งค่า (Settings) > คีย์ (Keys) > สร้างโทเค็นเข้าถึง (Generate access token) โทเค็นจะเก็บไว้ในพวงกุญแจของคอมพิวเตอร์เครื่องนี้ และส่งไปที่ Tailscale เท่านั้น",
-   "{id} is up to date.": "{id} เป็นเวอร์ชันล่าสุดแล้ว",
+   "{id} is up to date.": "{id} เป็นเวอร์���ันล่าสุดแล้ว",
 @@ -583,6 +604,7 @@
    "I read it and trust it: install": "อ่านแล้วและเชื่อถือ: ติดตั้ง",
    "Close export": "ปิดการส่งออก",
@@ -14023,7 +14023,7 @@ index d787c43..cfa823b 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "ลงชื่อเข้าใช้ด้วยบัญชีที่เป็นเจ้าของ Minecraft: Java Edition ชื่อและสกินของคุณจะติดตัวไปยังเซิร์ฟเวอร์ออนไลน์ เหมือนในลันเชอร์อื่น ๆ",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "หน้าของ Microsoft เองจะเปิดในเบราว์เซอร์ของคุณ Horizon ไม่เห็นรหัสผ่านของคุณเลย",
 diff --git a/launcher/lang/tr.json b/launcher/lang/tr.json
-index a23250e..73f5c4f 100644
+index a23250ee13..73f5c4ff2b 100644
 --- a/launcher/lang/tr.json
 +++ b/launcher/lang/tr.json
 @@ -102,9 +102,26 @@
@@ -14121,7 +14121,7 @@ index a23250e..73f5c4f 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Minecraft: Java Edition'a sahip hesapla giriş yap. Adın ve görünümün, diğer başlatıcılarda olduğu gibi çevrim içi sunuculara da gelir.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Microsoft'un kendi sayfası tarayıcında açılır. Horizon parolanı asla görmez.",
 diff --git a/launcher/lang/tt.json b/launcher/lang/tt.json
-index 111e3f3..c567e9e 100644
+index 111e3f34f4..c567e9ed81 100644
 --- a/launcher/lang/tt.json
 +++ b/launcher/lang/tt.json
 @@ -37,6 +37,7 @@
@@ -14307,7 +14307,7 @@ index 111e3f3..c567e9e 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Minecraft: Java басмасы булган счет белән керегез. Сезнең исемегез һәм тирегез башка эшләтеп җибәрүчеләрдәге кебек онлайн серверларга керә.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Microsoftның үз бите сезнең браузерда ачыла. Horizon серсүзне беркайчан да күрми.",
 diff --git a/launcher/lang/uk.json b/launcher/lang/uk.json
-index b1896f9..3b9dca4 100644
+index b1896f935c..3b9dca4c67 100644
 --- a/launcher/lang/uk.json
 +++ b/launcher/lang/uk.json
 @@ -37,6 +37,7 @@
@@ -14493,7 +14493,7 @@ index b1896f9..3b9dca4 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Увійдіть в обліковий запис, якому належить Minecraft: Java Edition. Ім'я та скін будуть з вами на онлайн-серверах, як в інших лаунчерах.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Сторінка Microsoft відкривається у вашому браузері. Horizon ніколи не бачить ваш пароль.",
 diff --git a/launcher/lang/ur.json b/launcher/lang/ur.json
-index da29f09..41a74fe 100644
+index da29f09cc0..41a74fee75 100644
 --- a/launcher/lang/ur.json
 +++ b/launcher/lang/ur.json
 @@ -37,6 +37,7 @@
@@ -14679,7 +14679,7 @@ index da29f09..41a74fe 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "اس اکاؤنٹ سے سائن ان کریں جو Minecraft: Java Edition کا مالک ہے۔ آپ کا نام اور اسکن دوسرے لانچرز کی طرح آن لائن سرورز پر بھی ساتھ جاتے ہیں۔",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Microsoft کا اپنا صفحہ آپ کے براؤزر میں کھلتا ہے۔ Horizon کبھی آپ کا پاس ورڈ نہیں دیکھتا۔",
 diff --git a/launcher/lang/uz.json b/launcher/lang/uz.json
-index 0885363..675af43 100644
+index 088536345b..675af43680 100644
 --- a/launcher/lang/uz.json
 +++ b/launcher/lang/uz.json
 @@ -37,6 +37,7 @@
@@ -14865,7 +14865,7 @@ index 0885363..675af43 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Minecraft: Java Edition-ga ega hisob qaydnomasi bilan tizimga kiring. Sizning ismingiz va teringiz boshqa ishga tushirgichlarda bo'lgani kabi onlayn serverlarga ham kiradi.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Brauzeringizda Microsoft-ning shaxsiy sahifasi ochiladi. Horizon hech qachon parolingizni ko'rmaydi.",
 diff --git a/launcher/lang/vec.json b/launcher/lang/vec.json
-index a665d93..ff1da4f 100644
+index a665d93496..ff1da4f902 100644
 --- a/launcher/lang/vec.json
 +++ b/launcher/lang/vec.json
 @@ -37,6 +37,7 @@
@@ -15051,7 +15051,7 @@ index a665d93..ff1da4f 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Accedi con el conto che possede Minecraft: Java Edition. El nome e ła skin i vien sui server online, come in altri launcher.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "La pagina propia de Microsoft si abre nel tuo browser. Horizon no vede mai la vostra password.",
 diff --git a/launcher/lang/vi.json b/launcher/lang/vi.json
-index d586c97..eb84659 100644
+index d586c97102..eb8465923a 100644
 --- a/launcher/lang/vi.json
 +++ b/launcher/lang/vi.json
 @@ -37,6 +37,7 @@
@@ -15237,7 +15237,7 @@ index d586c97..eb84659 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Đăng nhập bằng tài khoản sở hữu Minecraft: Java Edition. Tên và skin của bạn đi cùng bạn đến các máy chủ trực tuyến, giống như ở các launcher khác.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Trang của chính Microsoft mở trong trình duyệt của bạn. Horizon không bao giờ thấy mật khẩu của bạn.",
 diff --git a/launcher/lang/yi.json b/launcher/lang/yi.json
-index 9653cfd..0daa0d3 100644
+index 9653cfd2a9..0daa0d3514 100644
 --- a/launcher/lang/yi.json
 +++ b/launcher/lang/yi.json
 @@ -37,6 +37,7 @@
@@ -15423,7 +15423,7 @@ index 9653cfd..0daa0d3 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "קלאָץ אין מיט די חשבון וואָס אָונז Minecraft: Java אַדישאַן. דיין נאָמען און הויט קומען צוזאמען צו אָנליין סערווערס, ווי אין אנדערע לאַונטשערס.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "די אייגענע בלאַט פון Microsoft עפֿנט זיך אין דיין בלעטערער. Horizon קיינמאָל זעט דיין פּאַראָל.",
 diff --git a/launcher/lang/yo.json b/launcher/lang/yo.json
-index ca31b25..09f0c94 100644
+index ca31b25fd5..09f0c946ed 100644
 --- a/launcher/lang/yo.json
 +++ b/launcher/lang/yo.json
 @@ -37,6 +37,7 @@
@@ -15609,7 +15609,7 @@ index ca31b25..09f0c94 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Wọle pẹlu akọọlẹ ti o ni Minecraft: Java Edition. Orukọ rẹ ati awọ ara wa pẹlu awọn olupin ori ayelujara, bii ninu awọn ifilọlẹ miiran.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Oju-iwe ti ara rẹ Microsoft ṣii ni ẹrọ aṣawakiri rẹ. Horizon Ko ri ọrọ igbaniwọle rẹ rara.",
 diff --git a/launcher/lang/zh.json b/launcher/lang/zh.json
-index dfca472..e641ccc 100644
+index dfca4728f9..e641ccc624 100644
 --- a/launcher/lang/zh.json
 +++ b/launcher/lang/zh.json
 @@ -37,6 +37,7 @@
@@ -15795,7 +15795,7 @@ index dfca472..e641ccc 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "使用拥有 Minecraft: Java Edition 的账户登录。和其他启动器一样，你的名称和皮肤会随你进入在线服务器。",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Microsoft 自己的页面会在浏览器中打开。Horizon 永远看不到你的密码。",
 diff --git a/launcher/lang/zu.json b/launcher/lang/zu.json
-index 5ec9e62..7ab7e4f 100644
+index 5ec9e62711..7ab7e4f673 100644
 --- a/launcher/lang/zu.json
 +++ b/launcher/lang/zu.json
 @@ -37,6 +37,7 @@
@@ -15981,7 +15981,7 @@ index 5ec9e62..7ab7e4f 100644
    "Sign in with the account that owns Minecraft: Java Edition. Your name and skin come along to online servers, like in other launchers.": "Ngena ngemvume nge-akhawunti ephethe Minecraft: Java Edition. Igama lakho nesikhumba kufika kumaseva aku-inthanethi, njengakwezinye iziqalisi.",
    "Microsoft's own page opens in your browser. Horizon never sees your password.": "Ikhasi lika-Microsoft liyavuleka esipheqululini sakho. Horizon akalokothi ayibone iphasiwedi yakho.",
 diff --git a/launcher/src/account.rs b/launcher/src/account.rs
-index 3c13c32..2f4c923 100644
+index b4172bf099..7e5d660baf 100644
 --- a/launcher/src/account.rs
 +++ b/launcher/src/account.rs
 @@ -7,7 +7,7 @@
@@ -15993,7 +15993,7 @@ index 3c13c32..2f4c923 100644
  //! The game binary itself, its harnesses and the servers don't go through the launcher's gate.
  //!
  //! The Azure app (client ID) is Horizon's own and is configuration: `HORIZON_MSA_CLIENT_ID` at
-@@ -21,9 +21,9 @@ use std::sync::{Mutex, OnceLock};
+@@ -22,9 +22,9 @@ use std::sync::{Mutex, OnceLock};
  use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
  
  /// The keychain service name every secret is stored under.
@@ -16005,7 +16005,7 @@ index 3c13c32..2f4c923 100644
  /// What every Play says while no account in the launcher owns the game.
  pub const NEEDS_OWNER: &str =
      "Sign in with a Microsoft account that owns Minecraft: Java Edition to play";
-@@ -1693,14 +1693,33 @@ pub fn in_secrets_file() -> bool {
+@@ -1742,14 +1742,33 @@ pub fn in_secrets_file() -> bool {
  #[derive(Clone, Debug, Default, PartialEq, serde::Serialize, serde::Deserialize)]
  pub struct Accounts {
      pub accounts: Vec<Account>,
@@ -16046,7 +16046,7 @@ index 3c13c32..2f4c923 100644
  
  /// The secrets an account keeps in `store`, if it still has them there.
  fn secrets_in(store: &dyn SecretStore, uuid: &str) -> Option<Secrets> {
-@@ -1711,6 +1730,12 @@ fn secrets_in(store: &dyn SecretStore, uuid: &str) -> Option<Secrets> {
+@@ -1760,6 +1779,12 @@ fn secrets_in(store: &dyn SecretStore, uuid: &str) -> Option<Secrets> {
          .and_then(|s| serde_json::from_str(&s).ok())
  }
  
@@ -16059,7 +16059,7 @@ index 3c13c32..2f4c923 100644
  impl Accounts {
      pub(crate) fn path() -> PathBuf {
          crate::backend::data_dir().join("accounts.json")
-@@ -1740,16 +1765,6 @@ impl Accounts {
+@@ -1789,16 +1814,6 @@ impl Accounts {
              let _ = std::fs::remove_file(&tmp);
              return Err(e.to_string());
          }
@@ -16076,7 +16076,7 @@ index 3c13c32..2f4c923 100644
          Ok(())
      }
      /// Saves what a launch renewed (names, skins) into `accounts.json` as it is now, under the
-@@ -1768,7 +1783,7 @@ impl Accounts {
+@@ -1817,7 +1832,7 @@ impl Accounts {
          for account in &self.accounts {
              saved.update(account.clone());
          }
@@ -16085,7 +16085,7 @@ index 3c13c32..2f4c923 100644
              saved.selected = self
                  .selected
                  .clone()
-@@ -1816,7 +1831,7 @@ impl Accounts {
+@@ -1865,7 +1880,7 @@ impl Accounts {
          Ok(())
      }
      /// Whether an account here owned the game at its last check (the keychain's answer, no
@@ -16094,7 +16094,7 @@ index 3c13c32..2f4c923 100644
      pub fn has_owner(&self, store: &dyn SecretStore) -> bool {
          // The selected account first: it owning the game ends the search after one account's
          // item — every account's item read can ask for the keychain (macOS, #4912).
-@@ -1826,15 +1841,112 @@ impl Accounts {
+@@ -1875,15 +1890,112 @@ impl Accounts {
              .any(|a| secrets_in(store, &a.uuid).is_some_and(|s| s.owns))
      }
  
@@ -16212,7 +16212,7 @@ index 3c13c32..2f4c923 100644
      /// A renewed profile (its name or skin changed) in place of the old one; who plays stays.
      fn update(&mut self, account: Account) {
          if let Some(a) = self.accounts.iter_mut().find(|a| a.uuid == account.uuid) {
-@@ -1842,7 +1954,8 @@ impl Accounts {
+@@ -1891,7 +2003,8 @@ impl Accounts {
          }
      }
  
@@ -16222,7 +16222,7 @@ index 3c13c32..2f4c923 100644
      pub fn remove(&mut self, store: &dyn SecretStore, uuid: &str) -> Result<(), String> {
          let _operation = session::lock(store)?;
          store.delete(uuid)?;
-@@ -1857,9 +1970,8 @@ impl Accounts {
+@@ -1906,9 +2019,8 @@ impl Accounts {
  /// No account in the launcher owns Minecraft: Java Edition: the game must not start.
  #[derive(Debug, Default, PartialEq)]
  pub struct NoOwner {
@@ -16234,7 +16234,7 @@ index 3c13c32..2f4c923 100644
      pub keyring: Option<String>,
  }
  impl std::fmt::Display for NoOwner {
-@@ -1889,8 +2001,8 @@ impl NoOwner {
+@@ -1938,8 +2050,8 @@ impl NoOwner {
  /// The owner gate's pass for one launch.
  #[derive(Debug, Default)]
  pub struct Launch {
@@ -16245,7 +16245,7 @@ index 3c13c32..2f4c923 100644
      pub session: Option<(Account, Secrets)>,
      /// Why the selected account plays without its session this time.
      pub offline: Option<String>,
-@@ -2007,30 +2119,20 @@ pub fn launch(
+@@ -2056,30 +2168,20 @@ pub fn launch(
      }
  }
  
@@ -16284,7 +16284,7 @@ index 3c13c32..2f4c923 100644
      }
  }
  
-@@ -2267,14 +2369,19 @@ pub struct GameSession {
+@@ -2316,14 +2418,19 @@ pub struct GameSession {
  }
  
  /// The owner gate for the game about to start, then the selected account's session in a file
@@ -16306,7 +16306,7 @@ index 3c13c32..2f4c923 100644
      )?;
      let env = split_sessions(
          game_home,
-@@ -2291,7 +2398,7 @@ pub fn session_for_game(game_home: &Path) -> Result<GameSession, NoOwner> {
+@@ -2340,7 +2447,7 @@ pub fn session_for_game(game_home: &Path) -> Result<GameSession, NoOwner> {
  /// plays changes for this launch only, so several games can play as several accounts at once
  /// (#4952). What the services renewed (tokens, names, skins) is still kept; which account
  /// `account select` picked is not touched.
@@ -16315,7 +16315,7 @@ index 3c13c32..2f4c923 100644
      let mut accounts = Accounts::load();
      let pass = launch_as(
          &Endpoints::live(),
-@@ -2321,13 +2428,21 @@ fn launch_as(
+@@ -2370,13 +2477,21 @@ fn launch_as(
      client_id: Option<&str>,
      store: &dyn SecretStore,
      accounts: &mut Accounts,
@@ -16342,7 +16342,7 @@ index 3c13c32..2f4c923 100644
      pass
  }
  
-@@ -2353,7 +2468,7 @@ fn split_sessions(
+@@ -2402,7 +2517,7 @@ fn split_sessions(
      playing: Option<&str>,
  ) -> Vec<(&'static str, String)> {
      if splitscreen_on(game_home) {
@@ -16352,7 +16352,7 @@ index 3c13c32..2f4c923 100644
          let env = account_sessions(
              &Endpoints::live(),
 diff --git a/launcher/src/account/tests.rs b/launcher/src/account/tests.rs
-index 2429453..0ab0233 100644
+index 14b0d21e0a..08bc62c27f 100644
 --- a/launcher/src/account/tests.rs
 +++ b/launcher/src/account/tests.rs
 @@ -680,7 +680,7 @@ fn any_owner_opens_the_gate_and_the_one_who_plays_brings_the_session() {
@@ -16568,7 +16568,7 @@ index 2429453..0ab0233 100644
          r#"{"accounts":[],"selected":null}"#
      );
  }
-@@ -2244,7 +2282,7 @@ fn targeted_sign_in_rejects_another_identity_without_writing_or_selecting_it() {
+@@ -2311,7 +2349,7 @@ fn targeted_sign_in_rejects_another_identity_without_writing_or_selecting_it() {
  }
  
  #[test]
@@ -16577,7 +16577,7 @@ index 2429453..0ab0233 100644
      let store = MemoryStore::default();
      let mut accounts = signed_in(&store, &secrets("old", true));
      let mut other = notch();
-@@ -2264,6 +2302,20 @@ fn targeted_sign_in_preserves_the_selected_account() {
+@@ -2331,6 +2369,20 @@ fn targeted_sign_in_preserves_the_selected_account() {
      .unwrap();
      assert_eq!(accounts.selected.as_deref(), Some(other.uuid.as_str()));
      assert_eq!(kept(&store).minecraft_token, "renewed");
@@ -16598,7 +16598,7 @@ index 2429453..0ab0233 100644
  }
  
  #[test]
-@@ -2370,26 +2422,32 @@ fn a_launch_as_another_account_leaves_the_selected_one() {
+@@ -2437,26 +2489,32 @@ fn a_launch_as_another_account_leaves_the_selected_one() {
          skin: None,
          cape: None,
      });
@@ -16642,7 +16642,7 @@ index 2429453..0ab0233 100644
  }
  
  #[test]
-@@ -2516,3 +2574,29 @@ fn a_launch_saving_late_keeps_sign_ins_and_outs_made_meanwhile() {
+@@ -2583,3 +2641,29 @@ fn a_launch_saving_late_keeps_sign_ins_and_outs_made_meanwhile() {
      assert_eq!(names, [std::ffi::OsString::from("accounts.json")]);
      let _ = std::fs::remove_dir_all(&dir);
  }
@@ -16673,7 +16673,7 @@ index 2429453..0ab0233 100644
 +    let _ = std::fs::remove_dir_all(&dir);
 +}
 diff --git a/launcher/src/backend.rs b/launcher/src/backend.rs
-index fc81f2f..1af41e1 100644
+index fc81f2fab2..1af41e1fd6 100644
 --- a/launcher/src/backend.rs
 +++ b/launcher/src/backend.rs
 @@ -2114,7 +2114,8 @@ fn download_for_owner(
@@ -16801,7 +16801,7 @@ index fc81f2f..1af41e1 100644
                  );
              }
 diff --git a/launcher/src/cli.rs b/launcher/src/cli.rs
-index a02b24b..3f1ce0d 100644
+index a02b24bc59..3f1ce0d341 100644
 --- a/launcher/src/cli.rs
 +++ b/launcher/src/cli.rs
 @@ -126,8 +126,33 @@ enum AccountCmd {
@@ -17016,7 +17016,7 @@ index a02b24b..3f1ce0d 100644
      }
      Ok(())
 diff --git a/launcher/src/collection.rs b/launcher/src/collection.rs
-index 281f5f8..5b6f864 100644
+index 281f5f8428..5b6f864200 100644
 --- a/launcher/src/collection.rs
 +++ b/launcher/src/collection.rs
 @@ -45,41 +45,6 @@ fn kind_id(prefix: &str, kind: DataKind) -> &'static str {
@@ -17087,7 +17087,7 @@ index 281f5f8..5b6f864 100644
              "" => tr("No install ID: nothing has been collected").to_string(),
 diff --git a/launcher/src/dev_options.rs b/launcher/src/dev_options.rs
 new file mode 100644
-index 0000000..a2ade17
+index 0000000000..a2ade17d77
 --- /dev/null
 +++ b/launcher/src/dev_options.rs
 @@ -0,0 +1,62 @@
@@ -17154,7 +17154,7 @@ index 0000000..a2ade17
 +    }
 +}
 diff --git a/launcher/src/frame.rs b/launcher/src/frame.rs
-index 07cc6da..70e4793 100644
+index 07cc6da4b6..70e47931a7 100644
 --- a/launcher/src/frame.rs
 +++ b/launcher/src/frame.rs
 @@ -6,6 +6,7 @@ use super::*;
@@ -17304,7 +17304,7 @@ index 07cc6da..70e4793 100644
                          })),
                      id,
 diff --git a/launcher/src/game_log.rs b/launcher/src/game_log.rs
-index 6244045..1d671f2 100644
+index 6244045b2e..1d671f27ef 100644
 --- a/launcher/src/game_log.rs
 +++ b/launcher/src/game_log.rs
 @@ -29,11 +29,12 @@ pub fn matches(line: &str, search: &str) -> bool {
@@ -17323,7 +17323,7 @@ index 6244045..1d671f2 100644
          if let Ok(name) = std::fs::read_to_string(home.join("horizon-player.txt")) {
              names.push(name.trim().to_string());
 diff --git a/launcher/src/glass_account.rs b/launcher/src/glass_account.rs
-index d00857f..5627412 100644
+index d00857fde1..5627412f1b 100644
 --- a/launcher/src/glass_account.rs
 +++ b/launcher/src/glass_account.rs
 @@ -1,17 +1,22 @@
@@ -17560,7 +17560,7 @@ index d00857f..5627412 100644
  
      /// The Microsoft card: the accounts signed in here, then adding one (the mockup's card).
 diff --git a/launcher/src/glass_servers.rs b/launcher/src/glass_servers.rs
-index 2f1fb53..a481090 100644
+index 2f1fb53ce2..a481090b3f 100644
 --- a/launcher/src/glass_servers.rs
 +++ b/launcher/src/glass_servers.rs
 @@ -66,9 +66,6 @@ impl Launcher {
@@ -17620,7 +17620,7 @@ index 2f1fb53..a481090 100644
  
  /// The open server's port.
 diff --git a/launcher/src/glass_settings.rs b/launcher/src/glass_settings.rs
-index e96d725..fe2cf5a 100644
+index e96d725c11..fe2cf5a103 100644
 --- a/launcher/src/glass_settings.rs
 +++ b/launcher/src/glass_settings.rs
 @@ -494,7 +494,8 @@ impl Launcher {
@@ -17634,7 +17634,7 @@ index e96d725..fe2cf5a 100644
          vec![account, updates, launcher, network, game, ai, about, data]
      }
 diff --git a/launcher/src/home.rs b/launcher/src/home.rs
-index e670d9b..d877079 100644
+index e670d9b028..d877079fa6 100644
 --- a/launcher/src/home.rs
 +++ b/launcher/src/home.rs
 @@ -157,44 +157,6 @@ impl Launcher {
@@ -17698,7 +17698,7 @@ index e670d9b..d877079 100644
              PlayPress::Play => {
                  play = play.on_click(cx.listener(|this, _: &ClickEvent, _, cx| {
 diff --git a/launcher/src/instances.rs b/launcher/src/instances.rs
-index 2dd022b..32dea09 100644
+index 2dd022b3a5..32dea09b22 100644
 --- a/launcher/src/instances.rs
 +++ b/launcher/src/instances.rs
 @@ -710,6 +710,34 @@ fn follow_player(game_home: &Path, home: &Path) {
@@ -17737,7 +17737,7 @@ index 2dd022b..32dea09 100644
  mod switch;
  pub use switch::{switch, unkept, Plays, Unkept};
 diff --git a/launcher/src/instances/tests.rs b/launcher/src/instances/tests.rs
-index 4578d76..1f1e3e3 100644
+index 4578d76746..1f1e3e399b 100644
 --- a/launcher/src/instances/tests.rs
 +++ b/launcher/src/instances/tests.rs
 @@ -67,6 +67,33 @@ fn player_home(home: &Path) {
@@ -17775,7 +17775,7 @@ index 4578d76..1f1e3e3 100644
  fn existing_worlds_stay_where_they_are_and_every_folder_becomes_an_instance() {
      let root = scratch("migrate");
 diff --git a/launcher/src/java_launch.rs b/launcher/src/java_launch.rs
-index 3ba8d4a..f30f4a0 100644
+index 3ba8d4a479..f30f4a0bde 100644
 --- a/launcher/src/java_launch.rs
 +++ b/launcher/src/java_launch.rs
 @@ -378,7 +378,7 @@ pub fn command(version: &Value, launch: &Launch) -> Result<Command, String> {
@@ -17788,7 +17788,7 @@ index 3ba8d4a..f30f4a0 100644
          ("version_name", id.to_string()),
          (
 diff --git a/launcher/src/java_launch/tests.rs b/launcher/src/java_launch/tests.rs
-index 694a084..db72416 100644
+index 694a084759..db72416a34 100644
 --- a/launcher/src/java_launch/tests.rs
 +++ b/launcher/src/java_launch/tests.rs
 @@ -411,3 +411,27 @@ fn server_addresses_split_into_host_and_port() {
@@ -17820,7 +17820,7 @@ index 694a084..db72416 100644
 +    assert_eq!(a[i + 1], "0");
 +}
 diff --git a/launcher/src/lib.rs b/launcher/src/lib.rs
-index 0eb15c6..67bacf9 100644
+index 0eb15c6afb..67bacf9718 100644
 --- a/launcher/src/lib.rs
 +++ b/launcher/src/lib.rs
 @@ -36,6 +36,7 @@ pub mod native_mods;
@@ -17840,7 +17840,7 @@ index 0eb15c6..67bacf9 100644
  pub mod tailscale;
  pub mod telemetry;
 diff --git a/launcher/src/main.rs b/launcher/src/main.rs
-index 08618b1..b709a4d 100644
+index 08618b1260..b709a4dc18 100644
 --- a/launcher/src/main.rs
 +++ b/launcher/src/main.rs
 @@ -13,6 +13,7 @@ mod console;
@@ -18211,7 +18211,7 @@ index 08618b1..b709a4d 100644
      fn counts_get_thousands_separators() {
          let shown: Vec<String> = [0, 7, 999, 1000, 12_300, 1_234_500]
 diff --git a/launcher/src/mcp.rs b/launcher/src/mcp.rs
-index 4867e43..0144d5f 100644
+index 4867e439be..0144d5febb 100644
 --- a/launcher/src/mcp.rs
 +++ b/launcher/src/mcp.rs
 @@ -50,7 +50,7 @@ fn session_tools() -> Value {
@@ -18225,7 +18225,7 @@ index 4867e43..0144d5f 100644
  }
 diff --git a/launcher/src/offline_java.rs b/launcher/src/offline_java.rs
 new file mode 100644
-index 0000000..c77510d
+index 0000000000..c77510d3c8
 --- /dev/null
 +++ b/launcher/src/offline_java.rs
 @@ -0,0 +1,177 @@
@@ -18408,7 +18408,7 @@ index 0000000..c77510d
 +mod tests;
 diff --git a/launcher/src/offline_java_tests.rs b/launcher/src/offline_java_tests.rs
 new file mode 100644
-index 0000000..8e83e18
+index 0000000000..8e83e18ed6
 --- /dev/null
 +++ b/launcher/src/offline_java_tests.rs
 @@ -0,0 +1,70 @@
@@ -18483,7 +18483,7 @@ index 0000000..8e83e18
 +    fs::remove_dir_all(tmp).unwrap();
 +}
 diff --git a/launcher/src/other_launchers.rs b/launcher/src/other_launchers.rs
-index 4926b79..14bbeca 100644
+index 4926b790f2..14bbeca3d1 100644
 --- a/launcher/src/other_launchers.rs
 +++ b/launcher/src/other_launchers.rs
 @@ -467,6 +467,8 @@ pub fn in_folder(dir: &Path, launcher: Option<&'static str>) -> Vec<Found> {
@@ -18507,7 +18507,7 @@ index 4926b79..14bbeca 100644
              ATLAUNCHER => found.extend(atlauncher_instances(&dir)),
              _ => {}
 diff --git a/launcher/src/other_launchers/tests.rs b/launcher/src/other_launchers/tests.rs
-index a8fcaf4..d919cd1 100644
+index a8fcaf4e21..d919cd1e07 100644
 --- a/launcher/src/other_launchers/tests.rs
 +++ b/launcher/src/other_launchers/tests.rs
 @@ -429,3 +429,26 @@ fn curseforge_instances_read_their_version_and_loader() {
@@ -18538,7 +18538,7 @@ index a8fcaf4..d919cd1 100644
 +    let _ = fs::remove_dir_all(root);
 +}
 diff --git a/launcher/src/owner_page.rs b/launcher/src/owner_page.rs
-index d274cd2..cc94b17 100644
+index d274cd229e..cc94b1717a 100644
 --- a/launcher/src/owner_page.rs
 +++ b/launcher/src/owner_page.rs
 @@ -8,12 +8,21 @@ impl Launcher {
@@ -18588,7 +18588,7 @@ index d274cd2..cc94b17 100644
          card = match state {
              Shown::Code(uri, user_code) => {
 diff --git a/launcher/src/profile_heads.rs b/launcher/src/profile_heads.rs
-index 8a83d15..d4fca89 100644
+index 8a83d1544a..d4fca892fc 100644
 --- a/launcher/src/profile_heads.rs
 +++ b/launcher/src/profile_heads.rs
 @@ -23,11 +23,59 @@ struct Head {
@@ -18655,7 +18655,7 @@ index 8a83d15..d4fca89 100644
              let url = account.skin.as_ref().map(|s| s.0.clone());
              if self.0.get(&account.uuid).is_some_and(|h| {
 diff --git a/launcher/src/servers_page.rs b/launcher/src/servers_page.rs
-index d098640..35e41eb 100644
+index d0986405d0..35e41ebcdb 100644
 --- a/launcher/src/servers_page.rs
 +++ b/launcher/src/servers_page.rs
 @@ -59,6 +59,8 @@ pub(super) enum Field {
@@ -18775,7 +18775,7 @@ index d098640..35e41eb 100644
      fn add_server_folder(&mut self, cx: &mut Context<Self>) {
 diff --git a/launcher/src/skin_page.rs b/launcher/src/skin_page.rs
 new file mode 100644
-index 0000000..d4bcb8a
+index 0000000000..d4bcb8a9e6
 --- /dev/null
 +++ b/launcher/src/skin_page.rs
 @@ -0,0 +1,264 @@
@@ -19045,7 +19045,7 @@ index 0000000..d4bcb8a
 +}
 diff --git a/launcher/src/skins.rs b/launcher/src/skins.rs
 new file mode 100644
-index 0000000..a70933a
+index 0000000000..a70933aa86
 --- /dev/null
 +++ b/launcher/src/skins.rs
 @@ -0,0 +1,183 @@
@@ -19234,7 +19234,7 @@ index 0000000..a70933a
 +mod tests;
 diff --git a/launcher/src/skins/tests.rs b/launcher/src/skins/tests.rs
 new file mode 100644
-index 0000000..69f957b
+index 0000000000..69f957b74f
 --- /dev/null
 +++ b/launcher/src/skins/tests.rs
 @@ -0,0 +1,124 @@
@@ -19363,7 +19363,7 @@ index 0000000..69f957b
 +    std::fs::remove_dir_all(&root).unwrap();
 +}
 diff --git a/launcher/src/sources.rs b/launcher/src/sources.rs
-index 7d2c9a6..0c6bb1a 100644
+index 9c81ab75a5..b02f9ed7f2 100644
 --- a/launcher/src/sources.rs
 +++ b/launcher/src/sources.rs
 @@ -146,6 +146,7 @@ pub fn known_folders(os: Os, f: &Folders) -> Vec<(&'static str, PathBuf)> {
@@ -19383,10 +19383,10 @@ index 7d2c9a6..0c6bb1a 100644
              "ModrinthApp" | "com.modrinth.theseus" => Some("the Modrinth App"),
              "atlauncher" | "ATLauncher" => Some("ATLauncher"),
 diff --git a/launcher/src/sources_tests.rs b/launcher/src/sources_tests.rs
-index b2c098d..0931419 100644
+index 51a84bcab2..46b25db37e 100644
 --- a/launcher/src/sources_tests.rs
 +++ b/launcher/src/sources_tests.rs
-@@ -578,6 +578,7 @@ fn each_system_has_its_launcher_folders() {
+@@ -602,6 +602,7 @@ fn each_system_has_its_launcher_folders() {
          got[0],
          "the official launcher: C:/Users/r/AppData/Roaming/.minecraft"
      );
@@ -19395,7 +19395,7 @@ index b2c098d..0931419 100644
      assert!(got.contains(&"Dawn Client: C:/Users/r/AppData/Roaming/.dawn".into()));
  }
 diff --git a/launcher/src/switch_page.rs b/launcher/src/switch_page.rs
-index 4062a2e..153ffd2 100644
+index 4062a2e719..153ffd2421 100644
 --- a/launcher/src/switch_page.rs
 +++ b/launcher/src/switch_page.rs
 @@ -1,19 +1,32 @@
@@ -19675,7 +19675,7 @@ index 4062a2e..153ffd2 100644
 +    }
  }
 diff --git a/launcher/src/telemetry.rs b/launcher/src/telemetry.rs
-index d3961b8..ad747b8 100644
+index d3961b86b0..ad747b8116 100644
 --- a/launcher/src/telemetry.rs
 +++ b/launcher/src/telemetry.rs
 @@ -43,7 +43,7 @@ pub const NEVER: &str = "Never sent: your account name or UUID, world names, ser
@@ -19688,7 +19688,7 @@ index d3961b8..ad747b8 100644
  /// How many play Horizon now (exact), if the server says.
  pub fn playing_now() -> Option<u64> {
 diff --git a/launcher/src/wardrobe_page.rs b/launcher/src/wardrobe_page.rs
-index cb9d2d4..7aef14e 100644
+index cb9d2d451c..7aef14e38a 100644
 --- a/launcher/src/wardrobe_page.rs
 +++ b/launcher/src/wardrobe_page.rs
 @@ -525,9 +525,12 @@ impl Launcher {
@@ -19707,7 +19707,7 @@ index cb9d2d4..7aef14e 100644
  
      /// A trip came back: keep what it learnt, say how it went.
 diff --git a/launcher/tests/owner_gate.rs b/launcher/tests/owner_gate.rs
-index 7c59068..32fe4e6 100644
+index 7c59068c3c..32fe4e6e02 100644
 --- a/launcher/tests/owner_gate.rs
 +++ b/launcher/tests/owner_gate.rs
 @@ -1,13 +1,12 @@
@@ -19764,7 +19764,7 @@ index 7c59068..32fe4e6 100644
      let _ = std::fs::remove_dir_all(&root);
  }
 diff --git a/tools/lang_review/launcher/cs.json b/tools/lang_review/launcher/cs.json
-index b8d474e..af08cae 100644
+index b8d474e1db..af08caed9f 100644
 --- a/tools/lang_review/launcher/cs.json
 +++ b/tools/lang_review/launcher/cs.json
 @@ -64,6 +64,7 @@
@@ -19784,7 +19784,7 @@ index b8d474e..af08cae 100644
    "Port {count} mods": "Přenést {count} modů",
    "the port": "port",
 diff --git a/tools/lang_review/launcher/de.json b/tools/lang_review/launcher/de.json
-index eb22f86..a818920 100644
+index eb22f86367..a8189209aa 100644
 --- a/tools/lang_review/launcher/de.json
 +++ b/tools/lang_review/launcher/de.json
 @@ -20,6 +20,7 @@
@@ -19839,7 +19839,7 @@ index eb22f86..a818920 100644
    "Needs preparing": "Vorbereitung erforderlich"
  }
 diff --git a/tools/lang_review/launcher/ja.json b/tools/lang_review/launcher/ja.json
-index 6234865..cc02138 100644
+index 62348652ab..cc02138908 100644
 --- a/tools/lang_review/launcher/ja.json
 +++ b/tools/lang_review/launcher/ja.json
 @@ -57,9 +57,25 @@
@@ -19877,7 +19877,7 @@ index 6234865..cc02138 100644
    "From my install": "自分のインストールから",
    "Download and prepare": "ダウンロードして準備",
 diff --git a/tools/lang_review/launcher/pt-br.json b/tools/lang_review/launcher/pt-br.json
-index e4309d5..d371173 100644
+index e4309d524b..d371173b2d 100644
 --- a/tools/lang_review/launcher/pt-br.json
 +++ b/tools/lang_review/launcher/pt-br.json
 @@ -58,9 +58,26 @@
@@ -19916,7 +19916,7 @@ index e4309d5..d371173 100644
    "From my install": "Da minha instalação",
    "Download and prepare": "Baixar e preparar",
 diff --git a/tools/lang_review/launcher/tr.json b/tools/lang_review/launcher/tr.json
-index 9067d3c..3fcf0fb 100644
+index 9067d3c602..3fcf0fb8fe 100644
 --- a/tools/lang_review/launcher/tr.json
 +++ b/tools/lang_review/launcher/tr.json
 @@ -59,9 +59,26 @@
